@@ -1,0 +1,22 @@
+{
+    "name": "Deutsch B1 Quiz",
+    "short_name": "B1 Quiz",
+    "description": "300 Fragen zur Vorbereitung auf das Deutsch B1 Zertifikat",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0f0f1a",
+    "theme_color": "#e94560",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icons/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

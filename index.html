@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="B1 Quiz">
+<link rel="apple-touch-icon" href="icons/icon-192x192.png">
+<link rel="manifest" href="manifest.json">
+<title>Deutsch B1 Quiz</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface2: #222240;
+  --accent: #e94560;
+  --accent2: #ff6b81;
+  --green: #2ed573;
+  --green-bg: rgba(46,213,115,0.12);
+  --red: #ff4757;
+  --red-bg: rgba(255,71,87,0.12);
+  --yellow: #ffa502;
+  --yellow-bg: rgba(255,165,2,0.08);
+  --text: #edf0f5;
+  --text2: #8b8fa3;
+  --radius: 16px;
+  --safe-top: env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family:'DM Sans',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+.screen { display:none; min-height:100dvh; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ── START SCREEN ── */
+#start {
+  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+  justify-content: center;
+  align-items: center;
+  gap: 36px;
+}
+.logo-wrap {
+  text-align:center;
+  animation: fadeUp .6s ease-out;
+}
+.logo-circle {
+  width:100px; height:100px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:32px; font-weight:700; color:#fff;
+  box-shadow: 0 8px 32px rgba(233,69,96,0.3);
+  margin-bottom:16px;
+}
+.logo-wrap h1 { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+.logo-wrap p { color:var(--text2); font-size:15px; margin-top:4px; }
+
+.cat-grid {
+  width:100%; max-width:400px;
+  display:flex; flex-direction:column; gap:10px;
+  animation: fadeUp .6s ease-out .15s both;
+}
+.cat-btn {
+  display:flex; align-items:center; gap:12px;
+  padding:16px 18px;
+  background:var(--surface);
+  border:1.5px solid transparent;
+  border-radius:var(--radius);
+  color:var(--text);
+  font:600 15px/1.3 'DM Sans',sans-serif;
+  cursor:pointer;
+  transition: all .2s;
+  width:100%;
+  text-align:left;
+}
+.cat-btn:active { transform:scale(0.97); }
+.cat-btn:hover { border-color:var(--accent); background:var(--surface2); }
+.cat-btn .cat-icon {
+  width:40px; height:40px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0;
+}
+.cat-btn .cat-count { margin-left:auto; color:var(--text2); font-weight:400; font-size:13px; }
+.cat-btn .chevron { margin-left:8px; color:var(--text2); font-size:12px; }
+
+.stats-row {
+  display:flex; gap:12px; width:100%; max-width:400px;
+  animation: fadeUp .6s ease-out .3s both;
+}
+.stat-card {
+  flex:1; background:var(--surface); border-radius:var(--radius);
+  padding:16px; text-align:center;
+}
+.stat-card .stat-num { font-size:24px; font-weight:700; color:var(--accent); }
+.stat-card .stat-label { font-size:12px; color:var(--text2); margin-top:4px; }
+
+/* ── QUIZ SCREEN ── */
+#quiz {
+  padding: calc(var(--safe-top) + 12px) 0 0;
+}
+.quiz-header {
+  padding: 0 20px 12px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.quiz-top-row {
+  display:flex; align-items:center; justify-content:space-between;
+}
+.quit-btn {
+  background:none; border:none; color:var(--red); font:600 14px 'DM Sans',sans-serif;
+  cursor:pointer; padding:4px 0;
+}
+.quiz-score { display:flex; align-items:center; gap:6px; font-weight:600; font-size:14px; }
+.quiz-score .score-icon { color:var(--green); }
+.quiz-counter { color:var(--text2); font-size:14px; font-weight:500; }
+.progress-track {
+  height:4px; background:var(--surface2); border-radius:2px; overflow:hidden;
+}
+.progress-fill {
+  height:100%;
+  background:linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius:2px;
+  transition: width .4s ease;
+}
+
+.quiz-body {
+  flex:1; overflow-y:auto; padding:16px 20px calc(var(--safe-bottom) + 90px);
+  -webkit-overflow-scrolling:touch;
+}
+.q-category {
+  display:inline-block; font-size:12px; font-weight:600;
+  padding:4px 12px; border-radius:20px; margin-bottom:14px;
+}
+.q-category.Grammatik { background:rgba(99,140,255,0.15); color:#6b8cff; }
+.q-category.Vokabeln { background:rgba(255,165,2,0.15); color:#ffa502; }
+.q-category.Leseverstehen { background:rgba(46,213,115,0.15); color:#2ed573; }
+
+.q-text {
+  font-size:19px; font-weight:600; line-height:1.45;
+  margin-bottom:20px; letter-spacing:-0.2px;
+}
+.options-list { display:flex; flex-direction:column; gap:10px; }
+
+.opt-btn {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:15px 16px;
+  background:var(--surface);
+  border:1.5px solid var(--surface2);
+  border-radius:var(--radius);
+  color:var(--text);
+  font:500 15px/1.4 'DM Sans',sans-serif;
+  cursor:pointer;
+  transition: all .2s;
+  text-align:left; width:100%;
+}
+.opt-btn:active:not(.locked) { transform:scale(0.98); }
+.opt-btn.selected { border-color:var(--accent); background:rgba(233,69,96,0.08); }
+.opt-btn.correct { border-color:var(--green); background:var(--green-bg); }
+.opt-btn.wrong { border-color:var(--red); background:var(--red-bg); }
+.opt-btn.locked { cursor:default; }
+.opt-btn .opt-letter {
+  width:28px; height:28px; border-radius:8px;
+  background:var(--surface2); display:flex; align-items:center; justify-content:center;
+  font-weight:600; font-size:13px; flex-shrink:0; transition: all .2s;
+}
+.opt-btn.selected .opt-letter { background:var(--accent); color:#fff; }
+.opt-btn.correct .opt-letter { background:var(--green); color:#fff; }
+.opt-btn.wrong .opt-letter { background:var(--red); color:#fff; }
+.opt-btn .opt-text { flex:1; padding-top:3px; }
+
+.explanation-box {
+  margin-top:16px; padding:14px 16px;
+  background:var(--yellow-bg);
+  border-radius:var(--radius);
+  display:none; animation: fadeUp .3s ease-out;
+}
+.explanation-box.show { display:flex; gap:10px; align-items:flex-start; }
+.explanation-box .bulb { font-size:18px; flex-shrink:0; }
+.explanation-box p { font-size:14px; line-height:1.5; color:var(--text); }
+
+.quiz-footer {
+  position:fixed; bottom:0; left:0; right:0;
+  padding:12px 20px calc(var(--safe-bottom) + 12px);
+  background: linear-gradient(transparent, var(--bg) 20%);
+}
+.action-btn {
+  width:100%; padding:16px;
+  border:none; border-radius:var(--radius);
+  font:600 16px 'DM Sans',sans-serif;
+  cursor:pointer; transition: all .2s;
+  color:#fff;
+}
+.action-btn.primary { background:linear-gradient(135deg, var(--accent), var(--accent2)); }
+.action-btn.primary:disabled { opacity:0.35; cursor:default; }
+.action-btn.primary:active:not(:disabled) { transform:scale(0.97); }
+
+/* ── RESULT SCREEN ── */
+#result {
+  padding: calc(var(--safe-top) + 24px) 20px calc(var(--safe-bottom) + 20px);
+  align-items:center;
+}
+.result-circle-wrap {
+  position:relative; width:170px; height:170px; margin:20px 0;
+  animation: fadeUp .6s ease-out;
+}
+.result-circle-wrap svg { width:100%; height:100%; transform:rotate(-90deg); }
+.result-circle-wrap circle { fill:none; stroke-width:10; }
+.result-circle-wrap .track { stroke:var(--surface2); }
+.result-circle-wrap .fill-ring { stroke:var(--green); stroke-linecap:round; transition: stroke-dashoffset 1s ease; }
+.result-center {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.result-pct { font-size:42px; font-weight:700; letter-spacing:-1px; }
+.result-ratio { font-size:14px; color:var(--text2); }
+.result-msg { font-size:22px; font-weight:700; margin:8px 0 24px; animation: fadeUp .6s ease-out .2s both; }
+
+.wrong-list {
+  width:100%; max-width:500px;
+  display:flex; flex-direction:column; gap:12px;
+  animation: fadeUp .6s ease-out .3s both;
+  margin-bottom:24px;
+}
+.wrong-header { font-size:16px; font-weight:600; margin-bottom:4px; }
+.wrong-card {
+  background:var(--surface); border-radius:var(--radius); padding:16px;
+  text-align:left;
+}
+.wrong-card .wc-q { font-size:14px; font-weight:600; margin-bottom:8px; line-height:1.4; }
+.wrong-card .wc-row { display:flex; align-items:center; gap:6px; font-size:13px; margin:3px 0; }
+.wrong-card .wc-row.bad { color:var(--red); }
+.wrong-card .wc-row.good { color:var(--green); }
+.wrong-card .wc-row s { opacity:0.7; }
+.wrong-card .wc-expl { font-size:12px; color:var(--text2); margin-top:8px; line-height:1.4; }
+
+.result-actions {
+  width:100%; max-width:500px;
+  display:flex; flex-direction:column; gap:10px;
+  animation: fadeUp .6s ease-out .4s both;
+}
+.action-btn.secondary {
+  background:var(--surface); color:var(--text);
+  border:1.5px solid var(--surface2);
+}
+.action-btn.secondary:active { transform:scale(0.97); }
+.action-btn.orange { background:rgba(255,165,2,0.12); color:var(--yellow); border:1.5px solid rgba(255,165,2,0.25); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width:0; }
+</style>
+</head>
+<body>
+
+<!-- ═══ START ═══ -->
+<div id="start" class="screen active">
+  <div class="logo-wrap">
+    <div class="logo-circle">B1</div>
+    <h1>Deutsch B1</h1>
+    <p>Prüfungsvorbereitung · 300 Fragen</p>
+  </div>
+  <div class="cat-grid" id="catGrid"></div>
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-num" id="statPlayed">0</div>
+      <div class="stat-label">Gespielt</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statBest">–</div>
+      <div class="stat-label">Beste %</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">Serie</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ QUIZ ═══ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-top-row">
+      <button class="quit-btn" onclick="app.reset()">✕ Beenden</button>
+      <div class="quiz-score"><span class="score-icon">✓</span> <span id="qScore">0</span></div>
+      <div class="quiz-counter" id="qCounter">1 / 10</div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="qProgress" style="width:0%"></div></div>
+  </div>
+  <div class="quiz-body">
+    <div class="q-category" id="qCat">Grammatik</div>
+    <div class="q-text" id="qText"></div>
+    <div class="options-list" id="qOptions"></div>
+    <div class="explanation-box" id="qExpl"><span class="bulb">💡</span><p id="qExplText"></p></div>
+  </div>
+  <div class="quiz-footer">
+    <button class="action-btn primary" id="qAction" disabled onclick="app.action()">Bestätigen</button>
+  </div>
+</div>
+
+<!-- ═══ RESULT ═══ -->
+<div id="result" class="screen">
+  <div class="result-circle-wrap">
+    <svg viewBox="0 0 180 180">
+      <circle class="track" cx="90" cy="90" r="80"/>
+      <circle class="fill-ring" id="resRing" cx="90" cy="90" r="80" stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+    </svg>
+    <div class="result-center">
+      <div class="result-pct" id="resPct">0%</div>
+      <div class="result-ratio" id="resRatio">0 / 0</div>
+    </div>
+  </div>
+  <div class="result-msg" id="resMsg">Ergebnis</div>
+  <div class="wrong-list" id="wrongList"></div>
+  <div class="result-actions" id="resActions"></div>
+</div>
+
+<script>
+const ALL_QUESTIONS = [{"id":1,"category":"Grammatik","text":"Wenn ich mehr Zeit hätte, ___ ich öfter Sport machen.","options":["werde","würde","wollte","wurde"],"correct_index":1,"explanation":"Konjunktiv II mit 'würde' + Infinitiv drückt irreale Wünsche/Bedingungen aus: 'würde ... machen'."},{"id":2,"category":"Grammatik","text":"Das Auto ___ letzte Woche repariert.","options":["wurde","wird","hat","ist"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II. Das Auto wurde repariert."},{"id":3,"category":"Grammatik","text":"Er wartet ___ den Bus.","options":["für","auf","über","an"],"correct_index":1,"explanation":"'Warten' verlangt die Präposition 'auf' + Akkusativ: warten auf etwas/jemanden."},{"id":4,"category":"Grammatik","text":"Ich weiß nicht, ___ er morgen kommt.","options":["dass","ob","weil","wenn"],"correct_index":1,"explanation":"'Ob' leitet einen indirekten Ja/Nein-Fragesatz ein (Unsicherheit). 'Dass' wäre bei Gewissheit."},{"id":5,"category":"Grammatik","text":"Wenn er reich ___, würde er ein großes Haus kaufen.","options":["wäre","ist","war","sei"],"correct_index":0,"explanation":"Konjunktiv II von 'sein' = 'wäre'. Irrealer Bedingungssatz: Wenn ..., würde ..."},{"id":6,"category":"Vokabeln","text":"Was bedeutet 'sich bewerben'?","options":["Etwas im Fernsehen bewerben","Sich um eine Arbeitsstelle bemühen","Jemanden bewerten","Eine Prüfung ablegen"],"correct_index":1,"explanation":"'Sich bewerben' bedeutet, eine Bewerbung für eine Stelle einreichen — sich um eine Arbeitsstelle bemühen."},{"id":7,"category":"Grammatik","text":"Die Rechnung ___ vom Kellner gebracht.","options":["wird","hat","ist","soll"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Die Rechnung wird gebracht."},{"id":8,"category":"Grammatik","text":"Sie freut sich ___ die Einladung.","options":["auf","über","für","an"],"correct_index":1,"explanation":"'Sich freuen über' + Akk. = Freude über etwas Vergangenes/Erhaltenes. 'Sich freuen auf' = Vorfreude."},{"id":9,"category":"Grammatik","text":"Er ist müde, ___ er gestern spät ins Bett gegangen ist.","options":["obwohl","weil","damit","trotzdem"],"correct_index":1,"explanation":"'Weil' leitet einen kausalen Nebensatz ein (Verb am Ende). Grund: spät ins Bett gegangen."},{"id":10,"category":"Grammatik","text":"An deiner Stelle ___ ich sofort zum Arzt gehen.","options":["werde","würde","wollte","sollte"],"correct_index":1,"explanation":"'An deiner Stelle würde ich ...' ist eine typische Konjunktiv-II-Konstruktion für Ratschläge."},{"id":11,"category":"Vokabeln","text":"Welches Wort passt? 'Der Mieter muss die ___ jeden Monat bezahlen.'","options":["Miete","Meinung","Mitte","Münze"],"correct_index":0,"explanation":"'Die Miete' ist der monatliche Betrag, den ein Mieter für die Wohnung zahlt."},{"id":12,"category":"Grammatik","text":"Das Fenster ___ von dem Kind geöffnet worden.","options":["ist","hat","wird","wurde"],"correct_index":0,"explanation":"Passiv Perfekt: 'ist' + Partizip II + 'worden'. Das Fenster ist geöffnet worden."},{"id":13,"category":"Grammatik","text":"Ich interessiere mich ___ deutsche Geschichte.","options":["an","über","für","auf"],"correct_index":2,"explanation":"'Sich interessieren für' + Akk. ist die feste Verbindung."},{"id":14,"category":"Grammatik","text":"___ das Wetter schlecht ist, gehen wir trotzdem spazieren.","options":["Weil","Obwohl","Damit","Wenn"],"correct_index":1,"explanation":"'Obwohl' leitet einen konzessiven Nebensatz ein: Trotz des schlechten Wetters gehen wir spazieren."},{"id":15,"category":"Grammatik","text":"Wenn ich du wäre, ___ ich mehr lernen.","options":["werde","hätte","würde","könnte"],"correct_index":2,"explanation":"Konjunktiv II für Ratschläge: 'Wenn ich du wäre, würde ich ...' + Infinitiv."},{"id":16,"category":"Leseverstehen","text":"'Die Veranstaltung musste wegen technischer Probleme verschoben werden.' — Was ist passiert?","options":["Die Veranstaltung wurde abgesagt.","Die Veranstaltung findet zu einem anderen Zeitpunkt statt.","Die Technik wurde repariert.","Es gab keine Probleme."],"correct_index":1,"explanation":"'Verschoben' bedeutet auf einen anderen Termin verlegt, nicht abgesagt."},{"id":17,"category":"Grammatik","text":"In diesem Restaurant ___ nur vegetarisches Essen angeboten.","options":["wird","hat","ist","soll"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Es wird vegetarisches Essen angeboten."},{"id":18,"category":"Grammatik","text":"Sie denkt oft ___ ihre Kindheit.","options":["über","auf","an","für"],"correct_index":2,"explanation":"'Denken an' + Akk. = an jemanden/etwas denken (erinnern). 'Denken über' = Meinung haben."},{"id":19,"category":"Grammatik","text":"Er hat angerufen, ___ er sich entschuldigen wollte.","options":["damit","weil","obwohl","ob"],"correct_index":1,"explanation":"'Weil' gibt den Grund an. Verb am Satzende im Nebensatz: '... weil er sich entschuldigen wollte.'"},{"id":20,"category":"Vokabeln","text":"Was bedeutet 'die Ausbildung'?","options":["Ein Hochschulstudium","Eine berufliche Lehre / Berufsausbildung","Ein Sprachkurs","Eine Fortbildung für Manager"],"correct_index":1,"explanation":"'Die Ausbildung' bezeichnet die berufliche Lehre, typischerweise im dualen System in Deutschland."},{"id":21,"category":"Grammatik","text":"Wenn ich fliegen ___, würde ich nach Japan reisen.","options":["kann","könnte","konnte","können"],"correct_index":1,"explanation":"Konjunktiv II von 'können' = 'könnte'. Irrealer Bedingungssatz."},{"id":22,"category":"Grammatik","text":"Der Brief ___ gestern geschrieben.","options":["wurde","wird","ist","hat"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II. Der Brief wurde geschrieben."},{"id":23,"category":"Grammatik","text":"Er hat sich ___ das schlechte Essen beschwert.","options":["für","über","auf","an"],"correct_index":1,"explanation":"'Sich beschweren über' + Akk. ist die korrekte Verb-Präposition-Verbindung."},{"id":24,"category":"Grammatik","text":"Ich lerne Deutsch, ___ ich in Deutschland arbeiten kann.","options":["weil","obwohl","damit","ob"],"correct_index":2,"explanation":"'Damit' leitet einen finalen Nebensatz ein (Zweck/Ziel). Verschiedene Subjekte: ich lerne, ich kann arbeiten."},{"id":25,"category":"Grammatik","text":"Wenn es nicht so kalt ___, würden wir im Park picknicken.","options":["wäre","ist","war","würde"],"correct_index":0,"explanation":"Konjunktiv II von 'sein' = 'wäre'. Irrealer Bedingungssatz in der Gegenwart."},{"id":26,"category":"Vokabeln","text":"Was ist ein Synonym für 'allmählich'?","options":["plötzlich","nach und nach","sofort","niemals"],"correct_index":1,"explanation":"'Allmählich' bedeutet langsam, Schritt für Schritt — also 'nach und nach'."},{"id":27,"category":"Grammatik","text":"Die Straße ___ seit zwei Wochen gebaut.","options":["wird","wurde","ist","hat"],"correct_index":0,"explanation":"Passiv Präsens (andauernde Handlung): 'Die Straße wird gebaut.' — seit zwei Wochen, immer noch."},{"id":28,"category":"Grammatik","text":"Wir haben lange ___ die Lösung gesucht.","options":["für","auf","nach","über"],"correct_index":2,"explanation":"'Suchen nach' + Dat. ist die feste Verb-Präposition-Verbindung."},{"id":29,"category":"Grammatik","text":"Ich bleibe zu Hause, ___ ich krank bin.","options":["damit","ob","weil","obwohl"],"correct_index":2,"explanation":"'Weil' gibt den Grund an (kausaler Nebensatz). Verb am Satzende."},{"id":30,"category":"Leseverstehen","text":"'Aufgrund der hohen Nachfrage sind alle Plätze im Kurs bereits belegt.' — Was bedeutet das?","options":["Der Kurs wurde abgesagt.","Man kann sich noch anmelden.","Der Kurs ist voll, keine Anmeldung mehr möglich.","Der Kurs beginnt später."],"correct_index":2,"explanation":"'Alle Plätze belegt' = ausgebucht. Keine Anmeldung mehr möglich."},{"id":31,"category":"Grammatik","text":"Hätte ich das gewusst, ___ ich anders gehandelt.","options":["hätte","habe","hatte","werde"],"correct_index":0,"explanation":"Konjunktiv II Vergangenheit: 'Hätte ich gewusst, hätte ich gehandelt.' Irrealer Bedingungssatz."},{"id":32,"category":"Grammatik","text":"Das Paket ___ morgen zugestellt werden.","options":["kann","soll","muss","alle sind möglich"],"correct_index":3,"explanation":"Passiv mit Modalverb: Modalverb + Partizip II + 'werden'. Alle drei Optionen sind grammatisch korrekt."},{"id":33,"category":"Grammatik","text":"Sie erinnert sich gern ___ ihren letzten Urlaub.","options":["über","für","an","auf"],"correct_index":2,"explanation":"'Sich erinnern an' + Akk. ist die feste Verbindung."},{"id":34,"category":"Grammatik","text":"Er ging nach Hause, ___ er seine Arbeit beendet hatte.","options":["bevor","nachdem","während","bis"],"correct_index":1,"explanation":"'Nachdem' mit Plusquamperfekt im Nebensatz und Präteritum im Hauptsatz: Zeitliche Abfolge."},{"id":35,"category":"Vokabeln","text":"Welches Wort passt? 'Die ___ im Supermarkt sind heute günstiger.'","options":["Angebote","Aufgaben","Anträge","Angaben"],"correct_index":0,"explanation":"'Die Angebote' = Sonderpreise/Rabattaktionen im Supermarkt."},{"id":36,"category":"Grammatik","text":"Wenn ich mehr Geld hätte, ___ ich mir ein neues Auto kaufen.","options":["werde","will","könnte","kann"],"correct_index":2,"explanation":"Konjunktiv II von 'können' = 'könnte'. Irrealer Wunsch mit Bedingung."},{"id":37,"category":"Grammatik","text":"Das Lied ___ von Millionen Menschen gehört.","options":["wurde","hat","ist","hatte"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II. Das Lied wurde gehört."},{"id":38,"category":"Grammatik","text":"Er hat sich ___ den Kurs angemeldet.","options":["an","für","bei","zu"],"correct_index":2,"explanation":"'Sich anmelden bei' + Dat. (Institution) oder 'sich anmelden für' + Akk. (Kurs). Hier: 'bei dem Kurs' — korrekt ist auch 'für den Kurs'. Aber 'bei' passt im Kontext einer Institution."},{"id":39,"category":"Grammatik","text":"___ er müde war, ging er nicht ins Bett.","options":["Weil","Obwohl","Damit","Nachdem"],"correct_index":1,"explanation":"'Obwohl' drückt einen Widerspruch aus: Trotz Müdigkeit ging er nicht ins Bett (konzessiv)."},{"id":40,"category":"Grammatik","text":"Du ___ besser aufpassen sollen!","options":["hast","hattest","hättest","wirst"],"correct_index":2,"explanation":"Konjunktiv II Vergangenheit + Modalverb: 'Du hättest aufpassen sollen!' (Vorwurf)."},{"id":41,"category":"Leseverstehen","text":"'Der Vermieter hat das Recht, die Miete unter bestimmten Voraussetzungen zu erhöhen.' — Was darf der Vermieter?","options":["Die Wohnung jederzeit kündigen.","Die Miete unter bestimmten Bedingungen teurer machen.","Die Wohnung ohne Erlaubnis betreten.","Die Kaution behalten."],"correct_index":1,"explanation":"'Die Miete erhöhen' = die Miete teurer machen. 'Unter bestimmten Voraussetzungen' = unter bestimmten Bedingungen."},{"id":42,"category":"Grammatik","text":"Der Patient muss ___ dem Arzt untersucht werden.","options":["von","durch","mit","bei"],"correct_index":0,"explanation":"Im Passiv wird der Handelnde mit 'von' + Dat. eingeführt: '... von dem Arzt untersucht werden.'"},{"id":43,"category":"Grammatik","text":"Sie kümmert sich ___ die Kinder ihrer Schwester.","options":["für","über","um","auf"],"correct_index":2,"explanation":"'Sich kümmern um' + Akk. = für jemanden sorgen."},{"id":44,"category":"Grammatik","text":"Ich ruf dich an, ___ ich am Bahnhof ankomme.","options":["bis","sobald","damit","obwohl"],"correct_index":1,"explanation":"'Sobald' = sofort wenn. Temporaler Nebensatz: 'Sobald ich ankomme, rufe ich an.'"},{"id":45,"category":"Vokabeln","text":"Was bedeutet 'die Überstunden'?","options":["Stunden, die man in der Schule verbringt","Zusätzliche Arbeitsstunden über die reguläre Arbeitszeit hinaus","Die Öffnungszeiten eines Geschäfts","Die Wartezeit beim Arzt"],"correct_index":1,"explanation":"'Überstunden' sind Arbeitsstunden, die über die vertraglich vereinbarte Arbeitszeit hinausgehen."},{"id":46,"category":"Grammatik","text":"Es wäre schön, wenn wir uns öfter ___ könnten.","options":["treffen","getroffen","trafen","treffend"],"correct_index":0,"explanation":"Konjunktiv II: Modalverb 'könnten' + Infinitiv 'treffen'. 'Es wäre schön, wenn wir uns treffen könnten.'"},{"id":47,"category":"Grammatik","text":"Das Haus, ___ wir letztes Jahr gemietet haben, war sehr alt.","options":["das","dem","dessen","den"],"correct_index":0,"explanation":"Relativpronomen Akk. Neutrum: 'das Haus, das wir gemietet haben'. 'Haus' = Neutrum, Akkusativ (Objekt von 'mieten')."},{"id":48,"category":"Grammatik","text":"Der Kuchen ___ von meiner Oma gebacken worden.","options":["ist","hat","wird","wurde"],"correct_index":0,"explanation":"Passiv Perfekt: 'ist' + Partizip II + 'worden'. Der Kuchen ist gebacken worden."},{"id":49,"category":"Grammatik","text":"Er verlässt sich ___ seine Kollegin.","options":["an","über","für","auf"],"correct_index":3,"explanation":"'Sich verlassen auf' + Akk. = jemandem vertrauen."},{"id":50,"category":"Leseverstehen","text":"'Bitte beachten Sie, dass Umtausch nur mit Originalbeleg möglich ist.' — Was braucht man für den Umtausch?","options":["Einen Personalausweis","Den Kassenbon / die Quittung","Eine schriftliche Beschwerde","Die Verpackung des Produkts"],"correct_index":1,"explanation":"'Originalbeleg' = Kassenbon / Quittung. Ohne diesen Beleg ist kein Umtausch möglich."},{"id":51,"category":"Grammatik","text":"Die E-Mails ___ jeden Morgen vom Praktikanten sortiert.","options":["werden","wurden","sind","haben"],"correct_index":0,"explanation":"Passiv Präsens mit Plural-Subjekt: 'werden' + Partizip II. Die E-Mails werden sortiert."},{"id":52,"category":"Grammatik","text":"Das ist der Kollege, ___ Büro neben meinem liegt.","options":["der","dem","dessen","den"],"correct_index":2,"explanation":"Genitiv-Relativpronomen 'dessen' zeigt Besitz an: Der Kollege, dessen Büro ... (= sein Büro)."},{"id":53,"category":"Grammatik","text":"Wir müssen uns ___ die neuen Vorschriften halten.","options":["auf","an","über","für"],"correct_index":1,"explanation":"'Sich halten an' + Akk. = Regeln/Vorschriften befolgen."},{"id":54,"category":"Vokabeln","text":"Was bedeutet 'der Arbeitsvertrag'?","options":["Ein Dokument, das die Bedingungen einer Anstellung regelt","Ein Formular für die Steuererklärung","Eine Bescheinigung über Krankheitstage","Ein Antrag auf Arbeitslosengeld"],"correct_index":0,"explanation":"'Der Arbeitsvertrag' ist das rechtlich bindende Dokument zwischen Arbeitgeber und Arbeitnehmer über die Beschäftigungsbedingungen."},{"id":55,"category":"Grammatik","text":"In unserer Firma ___ viel Wert auf Teamarbeit gelegt.","options":["wird","hat","ist","soll"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Unpersönliches Passiv: Es wird Wert gelegt."},{"id":56,"category":"Grammatik","text":"Die Frau, ___ ich gestern geholfen habe, war sehr dankbar.","options":["die","der","deren","dem"],"correct_index":1,"explanation":"'Helfen' verlangt Dativ. Relativpronomen Dativ Femininum: 'der'. Die Frau, der ich geholfen habe."},{"id":57,"category":"Grammatik","text":"Er hat sich ___ eine neue Stelle beworben.","options":["für","um","auf","an"],"correct_index":1,"explanation":"'Sich bewerben um' + Akk. = sich um eine Stelle bemühen. (Alternativ: 'sich bewerben auf' ist umgangssprachlich.)"},{"id":58,"category":"Vokabeln","text":"Welches Wort beschreibt erneuerbare Energie aus Sonnenlicht?","options":["Windkraft","Solarenergie","Atomkraft","Erdgas"],"correct_index":1,"explanation":"'Solarenergie' wird aus Sonnenlicht gewonnen und zählt zu den erneuerbaren Energien."},{"id":59,"category":"Grammatik","text":"Die Bewerbungen ___ bis Ende des Monats eingereicht werden.","options":["müssen","werden","sind","haben"],"correct_index":0,"explanation":"Passiv mit Modalverb: Modalverb + Partizip II + 'werden'. Die Bewerbungen müssen eingereicht werden."},{"id":60,"category":"Grammatik","text":"Das Projekt, ___ wir seit drei Monaten arbeiten, ist fast fertig.","options":["an dem","auf dem","für das","über das"],"correct_index":0,"explanation":"'Arbeiten an' + Dat. → Relativsatz: 'an dem' (Neutrum Dativ). Das Projekt, an dem wir arbeiten."},{"id":61,"category":"Grammatik","text":"Die Chefin achtet sehr ___ Pünktlichkeit.","options":["über","auf","an","für"],"correct_index":1,"explanation":"'Achten auf' + Akk. = auf etwas Wert legen / darauf aufpassen."},{"id":62,"category":"Leseverstehen","text":"'Durch den Einsatz von Filtern konnte der CO₂-Ausstoß der Fabrik um 30 % gesenkt werden.' — Was wurde erreicht?","options":["Die Fabrik wurde geschlossen.","Die Luftverschmutzung der Fabrik wurde reduziert.","Die Filter mussten ausgetauscht werden.","Die Produktion wurde gesteigert."],"correct_index":1,"explanation":"'CO₂-Ausstoß senken' = weniger Abgase produzieren = Luftverschmutzung reduzieren."},{"id":63,"category":"Grammatik","text":"Den Mitarbeitern ___ ein kostenloser Parkplatz zur Verfügung gestellt.","options":["wird","werden","ist","hat"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Subjekt = 'ein Parkplatz' (Singular) → 'wird'."},{"id":64,"category":"Grammatik","text":"Der Mann, ___ Auto vor dem Haus steht, ist mein Nachbar.","options":["der","dem","dessen","den"],"correct_index":2,"explanation":"Genitiv-Relativpronomen 'dessen' drückt Besitz aus: Der Mann, dessen Auto ... (= sein Auto)."},{"id":65,"category":"Grammatik","text":"Sie hat sich lange ___ die Prüfung vorbereitet.","options":["für","auf","an","über"],"correct_index":1,"explanation":"'Sich vorbereiten auf' + Akk. = sich auf etwas Kommendes vorbereiten."},{"id":66,"category":"Vokabeln","text":"Was bedeutet 'die Mülltrennung'?","options":["Die Entsorgung von Sondermüll","Das Sortieren von Abfall in verschiedene Kategorien","Die Reinigung öffentlicher Plätze","Der Transport von Müll zur Deponie"],"correct_index":1,"explanation":"'Mülltrennung' bedeutet, Abfall nach Materialart (Papier, Plastik, Glas, Restmüll) zu sortieren."},{"id":67,"category":"Grammatik","text":"Neue Bäume ___ im Stadtpark gepflanzt.","options":["werden","wird","sind","haben"],"correct_index":0,"explanation":"Passiv Präsens Plural: 'Bäume werden gepflanzt.' Subjekt Plural → 'werden'."},{"id":68,"category":"Grammatik","text":"Die Stadt, ___ ich aufgewachsen bin, liegt im Süden.","options":["in der","in die","auf der","an der"],"correct_index":0,"explanation":"'Aufwachsen in' + Dat. → Relativsatz: 'in der' (Femininum Dativ). Die Stadt, in der ich aufgewachsen bin."},{"id":69,"category":"Grammatik","text":"Der Erfolg hängt ___ der Vorbereitung ab.","options":["an","von","auf","über"],"correct_index":1,"explanation":"'Abhängen von' + Dat. = durch etwas bestimmt werden. Der Erfolg hängt von der Vorbereitung ab."},{"id":70,"category":"Vokabeln","text":"Welches Wort passt? 'Nach der Probezeit bekommt der Angestellte einen unbefristeten ___.'","options":["Arbeitsvertrag","Lebenslauf","Zeugnis","Gehalt"],"correct_index":0,"explanation":"Ein 'unbefristeter Arbeitsvertrag' hat kein festgelegtes Enddatum — er gilt auf unbestimmte Zeit."},{"id":71,"category":"Grammatik","text":"Hier ___ nicht geraucht.","options":["wird","darf","ist","hat"],"correct_index":0,"explanation":"Unpersönliches Passiv Präsens: 'Hier wird nicht geraucht.' Allgemeines Verbot ohne genanntes Subjekt."},{"id":72,"category":"Grammatik","text":"Das Buch, ___ auf dem Tisch liegt, gehört meiner Kollegin.","options":["das","dem","dessen","den"],"correct_index":0,"explanation":"Relativpronomen Nominativ Neutrum: 'das'. Das Buch (Subjekt im Nebensatz) liegt auf dem Tisch."},{"id":73,"category":"Grammatik","text":"Ich muss mich ___ meinen Chef wenden, um Urlaub zu beantragen.","options":["auf","an","über","für"],"correct_index":1,"explanation":"'Sich wenden an' + Akk. = sich an jemanden richten, Kontakt aufnehmen."},{"id":74,"category":"Leseverstehen","text":"'Bewerber mit Berufserfahrung werden bevorzugt, Berufseinsteiger sind jedoch willkommen.' — Was ist richtig?","options":["Nur erfahrene Personen dürfen sich bewerben.","Erfahrene Bewerber haben Vorteile, aber auch Anfänger können sich bewerben.","Berufseinsteiger werden bevorzugt.","Berufserfahrung ist nicht relevant."],"correct_index":1,"explanation":"'Bevorzugt' = haben einen Vorteil. 'Jedoch willkommen' = Berufseinsteiger werden nicht ausgeschlossen."},{"id":75,"category":"Grammatik","text":"Die Heizung ___ im Sommer ausgeschaltet.","options":["wird","wurde","hat","ist"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Regelmäßige/gewohnheitsmäßige Handlung → Präsens."},{"id":76,"category":"Grammatik","text":"Die Lehrerin, ___ Unterricht immer spannend ist, ist sehr beliebt.","options":["die","der","deren","dem"],"correct_index":2,"explanation":"Genitiv-Relativpronomen Femininum: 'deren'. Die Lehrerin, deren Unterricht ... (= ihr Unterricht)."},{"id":77,"category":"Grammatik","text":"Er hat sich ___ seinen Fehler entschuldigt.","options":["über","für","auf","an"],"correct_index":1,"explanation":"'Sich entschuldigen für' + Akk. = um Verzeihung bitten wegen einer Sache."},{"id":78,"category":"Vokabeln","text":"Was ist 'der Klimawandel'?","options":["Eine kurzfristige Wetteränderung","Die langfristige Veränderung des globalen Klimas","Ein neues Heizungssystem","Die tägliche Wettervorhersage"],"correct_index":1,"explanation":"'Der Klimawandel' beschreibt die langfristige, durch menschliche Aktivität beschleunigte Veränderung des Erdklimas."},{"id":79,"category":"Grammatik","text":"Bei uns ___ Plastiktüten durch Papiertüten ersetzt.","options":["werden","wird","sind","haben"],"correct_index":0,"explanation":"Passiv Präsens Plural: 'Plastiktüten werden ersetzt.' Plural-Subjekt → 'werden'."},{"id":80,"category":"Grammatik","text":"Der Grund, ___ ich Deutsch lerne, ist mein Job in Berlin.","options":["warum","wofür","weshalb","warum und weshalb sind beide korrekt"],"correct_index":3,"explanation":"Sowohl 'warum' als auch 'weshalb' leiten kausale Relativsätze ein: 'Der Grund, warum/weshalb ich lerne ...'"},{"id":81,"category":"Grammatik","text":"Sie setzt sich ___ den Umweltschutz ein.","options":["über","auf","für","an"],"correct_index":2,"explanation":"'Sich einsetzen für' + Akk. = sich aktiv für eine Sache engagieren."},{"id":82,"category":"Leseverstehen","text":"'Homeoffice wird von immer mehr Unternehmen als fester Bestandteil der Arbeitskultur angesehen.' — Was bedeutet das?","options":["Unternehmen verbieten Homeoffice zunehmend.","Homeoffice wird von vielen Firmen als normaler Teil der Arbeit betrachtet.","Mitarbeiter lehnen Homeoffice ab.","Nur kleine Firmen bieten Homeoffice an."],"correct_index":1,"explanation":"'Als fester Bestandteil angesehen' = als selbstverständlichen Teil betrachten. 'Immer mehr' = zunehmend."},{"id":83,"category":"Grammatik","text":"Das Gehalt ___ am Ende des Monats überwiesen.","options":["wird","hat","ist","soll"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Das Gehalt wird überwiesen — regelmäßige Handlung."},{"id":84,"category":"Grammatik","text":"Die Kinder, ___ im Garten spielen, sind meine Neffen.","options":["die","der","denen","dessen"],"correct_index":0,"explanation":"Relativpronomen Nominativ Plural: 'die'. Die Kinder (Subjekt im Nebensatz) spielen."},{"id":85,"category":"Grammatik","text":"Er hat sich ___ das Stellenangebot informiert.","options":["für","über","auf","an"],"correct_index":1,"explanation":"'Sich informieren über' + Akk. = Informationen zu einem Thema einholen."},{"id":86,"category":"Vokabeln","text":"Was bedeutet 'der Lebenslauf'?","options":["Ein ärztliches Attest","Ein Dokument mit dem beruflichen und schulischen Werdegang","Ein Kündigungsschreiben","Eine Gehaltsabrechnung"],"correct_index":1,"explanation":"'Der Lebenslauf' (auch: Curriculum Vitae / CV) listet Ausbildung, Berufserfahrung und Qualifikationen auf."},{"id":87,"category":"Grammatik","text":"In diesem Gebäude ___ Energie durch Solaranlagen gewonnen.","options":["wird","werden","ist","hat"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Subjekt = 'Energie' (Singular) → 'wird'."},{"id":88,"category":"Grammatik","text":"Der Kunde, ___ ich die Rechnung geschickt habe, hat noch nicht bezahlt.","options":["der","dem","den","dessen"],"correct_index":1,"explanation":"'Jemandem etwas schicken' → Dativ. Relativpronomen Dativ Maskulinum: 'dem'."},{"id":89,"category":"Grammatik","text":"Sie beschäftigt sich ___ erneuerbaren Energien.","options":["über","mit","für","an"],"correct_index":1,"explanation":"'Sich beschäftigen mit' + Dat. = sich mit einem Thema auseinandersetzen."},{"id":90,"category":"Vokabeln","text":"Welches Wort passt? 'Die Firma hat 200 neue Mitarbeiter ___.'","options":["eingestellt","abgestellt","hergestellt","festgestellt"],"correct_index":0,"explanation":"'Einstellen' = jemanden als Mitarbeiter beschäftigen. 'Herstellen' = produzieren. 'Feststellen' = bemerken."},{"id":91,"category":"Grammatik","text":"Die Verpackungen ___ seit letztem Jahr recycelt.","options":["werden","wurde","ist","hat"],"correct_index":0,"explanation":"Passiv Präsens Plural: 'Die Verpackungen werden recycelt.' Andauernde Handlung seit letztem Jahr."},{"id":92,"category":"Grammatik","text":"Das Restaurant, ___ wir gestern gegessen haben, war ausgezeichnet.","options":["in dem","in das","auf dem","an dem"],"correct_index":0,"explanation":"'Essen in' + Dat. → Relativsatz: 'in dem' (Neutrum Dativ). Das Restaurant, in dem wir gegessen haben."},{"id":93,"category":"Grammatik","text":"Ich bin ___ diesem Ergebnis nicht zufrieden.","options":["über","auf","mit","für"],"correct_index":2,"explanation":"'Zufrieden mit' + Dat. = zufrieden sein mit etwas. Feste Adjektiv-Präposition-Verbindung."},{"id":94,"category":"Leseverstehen","text":"'Mitarbeiter, die regelmäßig Überstunden machen, haben Anspruch auf einen Freizeitausgleich.' — Was steht den Mitarbeitern zu?","options":["Eine Gehaltserhöhung","Zusätzliche freie Tage als Ausgleich","Ein neuer Arbeitsvertrag","Eine Versetzung in eine andere Abteilung"],"correct_index":1,"explanation":"'Freizeitausgleich' = zusätzliche freie Zeit/Tage als Kompensation für geleistete Überstunden."},{"id":95,"category":"Grammatik","text":"Der Müll ___ dreimal pro Woche abgeholt.","options":["wird","hat","ist","wurde"],"correct_index":0,"explanation":"Passiv Präsens: 'wird' + Partizip II. Regelmäßige, wiederkehrende Handlung → Präsens."},{"id":96,"category":"Grammatik","text":"Die Kollegin, ___ Vorschlag angenommen wurde, freut sich sehr.","options":["die","der","deren","dem"],"correct_index":2,"explanation":"Genitiv-Relativpronomen Femininum: 'deren'. Die Kollegin, deren Vorschlag ... (= ihr Vorschlag)."},{"id":97,"category":"Grammatik","text":"Die Regierung sorgt ___ den Ausbau des öffentlichen Nahverkehrs.","options":["über","auf","für","an"],"correct_index":2,"explanation":"'Sorgen für' + Akk. = sich darum kümmern, dass etwas geschieht."},{"id":98,"category":"Vokabeln","text":"Was bedeutet 'die Kündigung'?","options":["Eine Einladung zu einem Vorstellungsgespräch","Die offizielle Beendigung eines Arbeitsverhältnisses","Eine Gehaltserhöhung","Ein Antrag auf Elternzeit"],"correct_index":1,"explanation":"'Die Kündigung' ist die formelle Erklärung, ein Arbeitsverhältnis (oder einen Vertrag) zu beenden."},{"id":99,"category":"Grammatik","text":"Die Fenster, ___ gerade geputzt werden, gehören zum Konferenzraum.","options":["die","der","denen","dessen"],"correct_index":0,"explanation":"Relativpronomen Nominativ Plural: 'die'. Die Fenster (Subjekt im Passiv-Nebensatz) werden geputzt."},{"id":100,"category":"Leseverstehen","text":"'Bis 2030 soll der Anteil erneuerbarer Energien am Stromverbrauch auf 65 % steigen.' — Was ist das Ziel?","options":["Den gesamten Strom aus Kohle zu gewinnen.","Etwa zwei Drittel des Stroms aus erneuerbaren Quellen zu erzeugen.","Den Stromverbrauch um 65 % zu senken.","Alle Kraftwerke bis 2030 abzuschalten."],"correct_index":1,"explanation":"'Anteil auf 65 % steigen' = 65 % des Stroms soll aus erneuerbaren Energien stammen. 65 % ≈ zwei Drittel."},{"id":101,"category":"Grammatik","text":"___ des schlechten Wetters sind wir zu Hause geblieben.","options":["Trotz","Wegen","Während","Ohne"],"correct_index":1,"explanation":"'Wegen' + Genitiv gibt den Grund an: Wegen des schlechten Wetters (kausal)."},{"id":102,"category":"Grammatik","text":"Er hat ein ___ Auto gekauft.","options":["neues","neuer","neuem","neue"],"correct_index":0,"explanation":"Starke Deklination (unbestimmter Artikel, Akk. Neutrum): ein neues Auto."},{"id":103,"category":"Grammatik","text":"Sie lernt Spanisch, ___ im Urlaub kommunizieren zu können.","options":["damit","um","weil","dass"],"correct_index":1,"explanation":"'Um ... zu' + Infinitiv bei gleichem Subjekt: Sie lernt, um kommunizieren zu können."},{"id":104,"category":"Vokabeln","text":"Was bedeutet 'das Rezept' im medizinischen Kontext?","options":["Eine Kochanleitung","Eine ärztliche Verordnung für Medikamente","Ein Vertrag mit der Krankenkasse","Ein Laborergebnis"],"correct_index":1,"explanation":"'Das Rezept' ist im medizinischen Kontext die schriftliche Verordnung eines Arztes für ein Medikament."},{"id":105,"category":"Grammatik","text":"___ der Vorlesung hat er Notizen gemacht.","options":["Trotz","Wegen","Während","Statt"],"correct_index":2,"explanation":"'Während' + Genitiv gibt einen Zeitraum an: Während der Vorlesung (temporal)."},{"id":106,"category":"Grammatik","text":"Sie trägt einen ___ Mantel.","options":["langer","langen","langes","lange"],"correct_index":1,"explanation":"Schwache Deklination (bestimmter Artikel fehlt, aber 'einen' = Akk. Mask.): einen langen Mantel."},{"id":107,"category":"Grammatik","text":"Der Lehrer spricht langsam, ___ alle Schüler ihn verstehen.","options":["um ... zu","damit","weil","obwohl"],"correct_index":1,"explanation":"'Damit' bei verschiedenen Subjekten: Der Lehrer spricht (Subj. 1), damit die Schüler (Subj. 2) verstehen."},{"id":108,"category":"Vokabeln","text":"Was ist 'die Überweisung' beim Arzt?","options":["Eine Banküberweisung für die Rechnung","Ein Schreiben, das den Patienten an einen Facharzt weiterleitet","Ein Krankenschein für den Arbeitgeber","Eine Terminbestätigung"],"correct_index":1,"explanation":"'Die Überweisung' ist ein ärztliches Dokument, das den Patienten zur Behandlung an einen Spezialisten weiterleitet."},{"id":109,"category":"Grammatik","text":"___ seines hohen Fiebers ging er zur Arbeit.","options":["Wegen","Trotz","Während","Aufgrund"],"correct_index":1,"explanation":"'Trotz' + Genitiv drückt einen Widerspruch aus: Trotz des Fiebers ging er trotzdem (konzessiv)."},{"id":110,"category":"Grammatik","text":"Das ist die Geschichte eines ___ Mannes.","options":["alter","alten","altem","altes"],"correct_index":1,"explanation":"Gemischte Deklination (Genitiv Mask. nach 'eines'): eines alten Mannes."},{"id":111,"category":"Grammatik","text":"Ich spare Geld, ___ mir ein Flugticket leisten zu können.","options":["damit","um","weil","dass"],"correct_index":1,"explanation":"'Um ... zu' + Infinitiv bei gleichem Subjekt: Ich spare, um mir leisten zu können."},{"id":112,"category":"Vokabeln","text":"Welches Wort passt? 'Bitte ___ Sie im Hotel an der Rezeption ein.'","options":["checken","buchen","stornieren","reservieren"],"correct_index":0,"explanation":"'Einchecken' (an der Rezeption) = sich bei Ankunft im Hotel anmelden."},{"id":113,"category":"Grammatik","text":"___ der Sommerferien verreisen viele Familien.","options":["Trotz","Wegen","Während","Statt"],"correct_index":2,"explanation":"'Während' + Genitiv: zeitlicher Rahmen. Während der Sommerferien (temporal)."},{"id":114,"category":"Grammatik","text":"Wir wohnen in einem ___ Haus am Stadtrand.","options":["kleinem","kleines","kleinen","kleine"],"correct_index":2,"explanation":"Gemischte Deklination (Dat. Neutrum nach 'einem'): in einem kleinen Haus."},{"id":115,"category":"Grammatik","text":"Die Mutter gibt dem Kind Geld, ___ es sich ein Eis kaufen kann.","options":["um ... zu","damit","weil","obwohl"],"correct_index":1,"explanation":"Verschiedene Subjekte (Mutter gibt / Kind kauft) → 'damit' statt 'um ... zu'."},{"id":116,"category":"Vokabeln","text":"Was bedeutet 'die Nebenwirkungen'?","options":["Die Hauptwirkung eines Medikaments","Unerwünschte Begleiterscheinungen eines Medikaments","Die Dosierungsanleitung","Die Inhaltsstoffe einer Tablette"],"correct_index":1,"explanation":"'Nebenwirkungen' sind unerwünschte, zusätzliche Effekte, die bei der Einnahme eines Medikaments auftreten können."},{"id":117,"category":"Grammatik","text":"___ des Streiks fuhren keine Züge.","options":["Trotz","Aufgrund","Während","Statt"],"correct_index":1,"explanation":"'Aufgrund' + Genitiv gibt den Grund an (= wegen): Aufgrund des Streiks (kausal)."},{"id":118,"category":"Grammatik","text":"Die ___ Blumen stehen auf dem Tisch.","options":["frische","frischen","frischer","frischem"],"correct_index":1,"explanation":"Schwache Deklination (Nom. Plural nach 'die'): die frischen Blumen."},{"id":119,"category":"Grammatik","text":"Er fährt mit dem Fahrrad, ___ Geld für den Bus zu sparen.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Er fährt, um zu sparen. Finalsatz."},{"id":120,"category":"Leseverstehen","text":"'Ihre Reiserücktrittsversicherung greift nur bei Vorlage eines ärztlichen Attests.' — Was braucht man?","options":["Einen neuen Reisepass","Eine Bescheinigung vom Arzt","Eine Bestätigung des Reisebüros","Einen Nachweis der Hotelreservierung"],"correct_index":1,"explanation":"'Ärztliches Attest' = eine vom Arzt ausgestellte Bescheinigung über den Gesundheitszustand."},{"id":121,"category":"Grammatik","text":"___ der Pause sprachen sie über das Problem.","options":["Trotz","Wegen","Während","Aufgrund"],"correct_index":2,"explanation":"'Während' + Genitiv: zeitlicher Rahmen. Während der Pause (temporal)."},{"id":122,"category":"Grammatik","text":"Er ist ein ___ Freund von mir.","options":["guter","guten","gutem","gutes"],"correct_index":0,"explanation":"Gemischte Deklination (Nom. Mask. nach 'ein'): ein guter Freund."},{"id":123,"category":"Grammatik","text":"Sie schreibt die Adresse auf, ___ sie nicht zu vergessen.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Sie schreibt auf, um nicht zu vergessen."},{"id":124,"category":"Vokabeln","text":"Was bedeutet 'einen Kompromiss finden'?","options":["Einen Streit eskalieren","Eine Lösung finden, bei der beide Seiten nachgeben","Die eigene Meinung durchsetzen","Das Gespräch abbrechen"],"correct_index":1,"explanation":"'Einen Kompromiss finden' = eine Einigung erzielen, bei der alle Beteiligten Zugeständnisse machen."},{"id":125,"category":"Grammatik","text":"___ ihrer Erkältung nahm sie an der Besprechung teil.","options":["Wegen","Trotz","Während","Aufgrund"],"correct_index":1,"explanation":"'Trotz' + Genitiv: Widerspruch. Trotz ihrer Erkältung (konzessiv)."},{"id":126,"category":"Grammatik","text":"Ich mag ___ Kaffee am liebsten.","options":["schwarzen","schwarzer","schwarzem","schwarzes"],"correct_index":0,"explanation":"Starke Deklination (Akk. Mask. ohne Artikel): schwarzen Kaffee."},{"id":127,"category":"Grammatik","text":"Der Chef erklärt die Aufgabe langsam, ___ der neue Mitarbeiter alles versteht.","options":["um ... zu","damit","weil","obwohl"],"correct_index":1,"explanation":"Verschiedene Subjekte (Chef erklärt / Mitarbeiter versteht) → 'damit'."},{"id":128,"category":"Vokabeln","text":"Was ist 'die Pauschalreise'?","options":["Eine Reise ohne festes Ziel","Ein Reisepaket mit Flug, Hotel und Verpflegung zu einem Gesamtpreis","Eine Geschäftsreise auf Firmenkosten","Eine Tagesreise in die Umgebung"],"correct_index":1,"explanation":"'Die Pauschalreise' ist ein Komplettangebot: Transport, Unterkunft und oft Verpflegung zu einem Festpreis."},{"id":129,"category":"Grammatik","text":"___ des langen Fluges war sie sehr erschöpft.","options":["Trotz","Wegen","Während","Statt"],"correct_index":1,"explanation":"'Wegen' + Genitiv: kausaler Zusammenhang. Wegen des langen Fluges (Grund der Erschöpfung)."},{"id":130,"category":"Grammatik","text":"Mit ___ Gefühl hat sie das Lied gesungen.","options":["tiefem","tiefen","tiefer","tiefes"],"correct_index":0,"explanation":"Starke Deklination (Dat. Neutrum ohne Artikel): mit tiefem Gefühl."},{"id":131,"category":"Grammatik","text":"Er stellt den Wecker, ___ nicht zu verschlafen.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Er stellt den Wecker, um nicht zu verschlafen."},{"id":132,"category":"Leseverstehen","text":"'Bei Unzufriedenheit mit dem Hotelzimmer wenden Sie sich bitte an die Rezeption.' — Was soll man tun?","options":["Sofort abreisen","Eine Online-Bewertung schreiben","An der Rezeption das Problem melden","Den Reiseveranstalter anrufen"],"correct_index":2,"explanation":"'Sich wenden an die Rezeption' = sich an der Rezeption melden/beschweren."},{"id":133,"category":"Grammatik","text":"___ der Bauarbeiten ist die Straße gesperrt.","options":["Trotz","Während","Statt","Wegen"],"correct_index":3,"explanation":"'Wegen' + Genitiv: Grund. Die Straße ist gesperrt wegen der Bauarbeiten (kausal)."},{"id":134,"category":"Grammatik","text":"Das ist der Preis ___ Weines.","options":["des roten","dem roten","der rote","den roten"],"correct_index":0,"explanation":"Schwache Deklination (Gen. Mask. nach 'des'): des roten Weines."},{"id":135,"category":"Grammatik","text":"Sie nimmt Tabletten, ___ die Kopfschmerzen loszuwerden.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Sie nimmt Tabletten, um loszuwerden."},{"id":136,"category":"Vokabeln","text":"Was bedeutet 'die Sprechstunde' beim Arzt?","options":["Die Zeit, in der der Arzt Patienten empfängt","Ein Telefongespräch mit der Krankenkasse","Die Wartezeit im Wartezimmer","Ein Gespräch zwischen zwei Ärzten"],"correct_index":0,"explanation":"'Die Sprechstunde' ist die festgelegte Zeit, in der ein Arzt Patienten behandelt oder berät."},{"id":137,"category":"Grammatik","text":"___ des Gewitters blieben die Kinder im Haus.","options":["Statt","Trotz","Während","Innerhalb"],"correct_index":2,"explanation":"'Während' + Genitiv: zeitlicher Rahmen. Während des Gewitters (temporal)."},{"id":138,"category":"Grammatik","text":"Sie hat ___ Haare und ___ Augen.","options":["blonde / blaue","blondes / blaues","blonden / blauen","blonder / blauer"],"correct_index":0,"explanation":"Starke Deklination (Akk. Plural ohne Artikel): blonde Haare, blaue Augen."},{"id":139,"category":"Grammatik","text":"Die Eltern sprechen leise, ___ das Baby nicht aufzuwecken.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Die Eltern sprechen leise, um das Baby nicht aufzuwecken."},{"id":140,"category":"Vokabeln","text":"Was bedeutet 'stornieren' im Reisekontext?","options":["Eine Reise buchen","Eine Buchung rückgängig machen","Einen Flug umbuchen","Einen Sitzplatz reservieren"],"correct_index":1,"explanation":"'Stornieren' = eine bestehende Buchung (Hotel, Flug) offiziell rückgängig machen/absagen."},{"id":141,"category":"Grammatik","text":"___ seiner Erfahrung bekam er die Stelle sofort.","options":["Trotz","Aufgrund","Während","Statt"],"correct_index":1,"explanation":"'Aufgrund' + Genitiv: kausaler Zusammenhang (= wegen). Aufgrund seiner Erfahrung."},{"id":142,"category":"Grammatik","text":"Ich habe dem ___ Kind ein Buch geschenkt.","options":["kleinem","kleinen","kleines","kleine"],"correct_index":1,"explanation":"Schwache Deklination (Dat. Neutrum nach 'dem'): dem kleinen Kind."},{"id":143,"category":"Grammatik","text":"Der Arzt verschreibt Medikamente, ___ der Patient schneller gesund wird.","options":["um ... zu","damit","weil","obwohl"],"correct_index":1,"explanation":"Verschiedene Subjekte (Arzt verschreibt / Patient wird gesund) → 'damit'."},{"id":144,"category":"Leseverstehen","text":"'Bitte bringen Sie zum Termin Ihre Versichertenkarte und den Überweisungsschein mit.' — Was muss der Patient mitbringen?","options":["Personalausweis und Führerschein","Krankenversicherungskarte und ärztliche Überweisung","Impfpass und Blutbild","Rezept und Medikamente"],"correct_index":1,"explanation":"'Versichertenkarte' = Krankenversicherungskarte. 'Überweisungsschein' = ärztliche Überweisung an Facharzt."},{"id":145,"category":"Grammatik","text":"___ des Verbots rauchte er auf dem Balkon.","options":["Wegen","Trotz","Während","Aufgrund"],"correct_index":1,"explanation":"'Trotz' + Genitiv: Widerspruch zur Erwartung. Trotz des Verbots (konzessiv)."},{"id":146,"category":"Grammatik","text":"Er trinkt gern ___ Tee mit ___ Honig.","options":["heißen / süßem","heißer / süßer","heiße / süße","heißem / süßen"],"correct_index":0,"explanation":"Starke Dekl.: Akk. Mask. ohne Artikel = heißen Tee; Dat. Mask. ohne Artikel (mit) = mit süßem Honig."},{"id":147,"category":"Grammatik","text":"Er macht einen Sprachkurs, ___ bessere Chancen auf dem Arbeitsmarkt zu haben.","options":["damit","um","weil","obwohl"],"correct_index":1,"explanation":"'Um ... zu' bei gleichem Subjekt: Er macht einen Kurs, um bessere Chancen zu haben."},{"id":148,"category":"Vokabeln","text":"Was bedeutet 'sich einigen' bei einem Konflikt?","options":["Den Streit ignorieren","Zu einer gemeinsamen Lösung kommen","Einen Anwalt einschalten","Die Kommunikation abbrechen"],"correct_index":1,"explanation":"'Sich einigen' = gemeinsam eine Lösung oder Vereinbarung finden, der alle Parteien zustimmen."},{"id":149,"category":"Grammatik","text":"Innerhalb ___ Tage muss die Rechnung bezahlt werden.","options":["weniger","wenige","wenigen","wenigem"],"correct_index":0,"explanation":"'Innerhalb' + Genitiv: innerhalb weniger Tage. Starke Deklination Gen. Plural."},{"id":150,"category":"Leseverstehen","text":"'Sollten Sie mit der Behandlung nicht einverstanden sein, haben Sie das Recht, eine zweite Meinung einzuholen.' — Was darf der Patient?","options":["Den Arzt verklagen","Einen anderen Arzt um seine Einschätzung bitten","Die Behandlung selbst durchführen","Die Krankenkasse wechseln"],"correct_index":1,"explanation":"'Eine zweite Meinung einholen' = einen weiteren Arzt konsultieren, um eine alternative Einschätzung zu erhalten."},{"id":151,"category":"Grammatik","text":"Das Dokument ___ gestern Abend von der Sekretärin abgeschickt.","options":["wurde","wird","ist","hat"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II."},{"id":152,"category":"Grammatik","text":"Er ___ als Kind jeden Tag Klavier üben.","options":["muss","musste","müsste","gemusst"],"correct_index":1,"explanation":"Modalverb Präteritum: 'müssen' → 'musste'."},{"id":153,"category":"Grammatik","text":"Können Sie mir sagen, ___ der nächste Zug abfährt?","options":["wann","ob","dass","wenn"],"correct_index":0,"explanation":"Indirekte W-Frage: 'wann' + Verb am Satzende."},{"id":154,"category":"Vokabeln","text":"Was bedeutet 'der Browser'?","options":["Ein Programm zum Ansehen von Internetseiten","Ein Gerät zum Drucken","Ein Computervirus","Ein E-Mail-Anhang"],"correct_index":0,"explanation":"'Browser' = Software zum Anzeigen von Webseiten (z. B. Chrome, Firefox)."},{"id":155,"category":"Grammatik","text":"Die Brücke ___ im Jahr 1890 gebaut worden.","options":["war","ist","wurde","hat"],"correct_index":0,"explanation":"Passiv Plusquamperfekt: 'war' + Partizip II + 'worden'."},{"id":156,"category":"Grammatik","text":"Als Jugendlicher ___ er nicht allein reisen.","options":["darf","durfte","dürfte","gedurft"],"correct_index":1,"explanation":"Modalverb Präteritum: 'dürfen' → 'durfte'."},{"id":157,"category":"Grammatik","text":"Ich möchte wissen, ___ du morgen Zeit hast.","options":["wann","ob","dass","wie"],"correct_index":1,"explanation":"Indirekte Ja/Nein-Frage: 'ob' + Verb am Satzende."},{"id":158,"category":"Vokabeln","text":"Welches Wort passt? 'Er hat sein ___ vergessen und kann sich nicht einloggen.'","options":["Passwort","Programm","Bildschirm","Lautsprecher"],"correct_index":0,"explanation":"'Passwort' = geheimes Kennwort zum Einloggen in ein Konto."},{"id":159,"category":"Grammatik","text":"Die Gäste ___ vom Direktor persönlich begrüßt.","options":["wurden","werden","sind","haben"],"correct_index":0,"explanation":"Passiv Präteritum Plural: 'wurden' + Partizip II."},{"id":160,"category":"Grammatik","text":"Sie ___ damals nicht so spät ausgehen.","options":["durfte","darf","dürfte","dürfen"],"correct_index":0,"explanation":"Modalverb Präteritum: 'dürfen' → 'durfte'. 'Damals' = Vergangenheit."},{"id":161,"category":"Grammatik","text":"Weißt du, ___ das Konzert stattfindet?","options":["ob","wo","dass","wenn"],"correct_index":1,"explanation":"Indirekte W-Frage nach dem Ort: 'wo' + Verb am Satzende."},{"id":162,"category":"Vokabeln","text":"Was bedeutet 'herunterladen' (downloaden)?","options":["Etwas aus dem Internet auf den Computer speichern","Eine E-Mail schreiben","Den Computer ausschalten","Eine Webseite aktualisieren"],"correct_index":0,"explanation":"'Herunterladen' = Dateien aus dem Internet auf ein Gerät übertragen."},{"id":163,"category":"Grammatik","text":"Das Tor ___ in der letzten Minute geschossen worden.","options":["ist","war","wurde","hat"],"correct_index":1,"explanation":"Passiv Plusquamperfekt: 'war' + Partizip II + 'worden'."},{"id":164,"category":"Grammatik","text":"Wir ___ früher jeden Sommer an die Nordsee fahren.","options":["wollten","wollen","wolltet","gewollt"],"correct_index":0,"explanation":"Modalverb Präteritum: 'wollen' → 'wollten' (1. Person Plural)."},{"id":165,"category":"Grammatik","text":"Er hat mich gefragt, ___ ich ihm bei dem Projekt helfen kann.","options":["dass","ob","wann","wenn"],"correct_index":1,"explanation":"Indirekte Ja/Nein-Frage: 'ob' leitet die Unsicherheit ein."},{"id":166,"category":"Leseverstehen","text":"'Laut einer aktuellen Studie informieren sich über 60 % der Jugendlichen hauptsächlich über soziale Medien.' — Wo lesen Jugendliche Nachrichten?","options":["Hauptsächlich in gedruckten Zeitungen","Überwiegend in sozialen Netzwerken","Ausschließlich im Fernsehen","Gar nicht"],"correct_index":1,"explanation":"'Hauptsächlich über soziale Medien' = überwiegend in sozialen Netzwerken."},{"id":167,"category":"Grammatik","text":"Alle Fenster ___ während des Sturms geschlossen.","options":["wurden","werden","sind","haben"],"correct_index":0,"explanation":"Passiv Präteritum Plural: 'wurden' + Partizip II."},{"id":168,"category":"Grammatik","text":"Ich ___ gestern leider nicht kommen, weil ich krank war.","options":["konnte","kann","könnte","gekonnt"],"correct_index":0,"explanation":"Modalverb Präteritum: 'können' → 'konnte'. Gestern = Vergangenheit."},{"id":169,"category":"Grammatik","text":"Sag mir bitte, ___ du das gemacht hast.","options":["ob","warum","dass","wenn"],"correct_index":1,"explanation":"Indirekte W-Frage nach dem Grund: 'warum' + Verb am Satzende."},{"id":170,"category":"Vokabeln","text":"Was ist 'der Datenschutz'?","options":["Ein Antivirenprogramm","Der Schutz persönlicher Daten vor Missbrauch","Eine Datei-Sicherungskopie","Die Geschwindigkeit des Internets"],"correct_index":1,"explanation":"'Datenschutz' = rechtlicher Schutz personenbezogener Daten vor unerlaubter Nutzung."},{"id":171,"category":"Grammatik","text":"Der Vertrag ___ nächste Woche unterschrieben werden.","options":["wird","wurde","ist","war"],"correct_index":0,"explanation":"Passiv Futur I: 'wird' + Partizip II + 'werden'."},{"id":172,"category":"Grammatik","text":"Sie ___ als Schülerin kein Handy benutzen.","options":["sollte","soll","solltet","gesollt"],"correct_index":0,"explanation":"Modalverb Präteritum: 'sollen' → 'sollte'. Vergangenheit (als Schülerin)."},{"id":173,"category":"Grammatik","text":"Ich weiß nicht, ___ viel das Ticket kostet.","options":["ob","wie","dass","was"],"correct_index":1,"explanation":"Indirekte W-Frage: 'wie viel' fragt nach dem Preis."},{"id":174,"category":"Vokabeln","text":"Was bedeutet 'die Schlagzeile'?","options":["Die letzte Seite einer Zeitung","Die Hauptüberschrift eines Nachrichtenartikels","Ein Leserbrief","Die Wettervorhersage"],"correct_index":1,"explanation":"'Die Schlagzeile' = auffällige Hauptüberschrift eines Presseartikels."},{"id":175,"category":"Grammatik","text":"Die Nachricht ___ sofort an alle Mitarbeiter weitergeleitet.","options":["wurde","wird","hat","ist"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II."},{"id":176,"category":"Grammatik","text":"Er ___ als Kind nicht so viel Schokolade essen.","options":["durfte","darf","dürfte","mochte"],"correct_index":0,"explanation":"Modalverb Präteritum: 'dürfen' → 'durfte'. Verbot in der Vergangenheit."},{"id":177,"category":"Grammatik","text":"Kannst du mir erklären, ___ man dieses Programm installiert?","options":["ob","wie","dass","wann"],"correct_index":1,"explanation":"Indirekte W-Frage nach der Art und Weise: 'wie' + Verb am Satzende."},{"id":178,"category":"Vokabeln","text":"Was bedeutet 'ehrenamtlich arbeiten'?","options":["In Teilzeit arbeiten","Freiwillig und ohne Bezahlung für die Gemeinschaft arbeiten","Überstunden machen","Einen befristeten Vertrag haben"],"correct_index":1,"explanation":"'Ehrenamtlich' = freiwillig, unentgeltlich im Dienst der Gesellschaft."},{"id":179,"category":"Grammatik","text":"Das Gebäude ___ im Krieg zerstört worden.","options":["ist","war","wurde","hat"],"correct_index":1,"explanation":"Passiv Plusquamperfekt: 'war' + Partizip II + 'worden'."},{"id":180,"category":"Grammatik","text":"Wir ___ als Kinder jeden Tag draußen spielen.","options":["mussten","müssen","müssten","gemusst"],"correct_index":0,"explanation":"Modalverb Präteritum: 'müssen' → 'mussten' (Gewohnheit in der Vergangenheit)."},{"id":181,"category":"Grammatik","text":"Sie fragte, ___ ich schon einmal in Wien gewesen sei.","options":["dass","ob","wann","wenn"],"correct_index":1,"explanation":"Indirekte Ja/Nein-Frage in der indirekten Rede: 'ob'."},{"id":182,"category":"Leseverstehen","text":"'Bürgerinnen und Bürger können sich an einer Online-Petition beteiligen, um den Bau des Parkplatzes zu verhindern.' — Was können die Bürger tun?","options":["Den Parkplatz selbst bauen","Im Internet eine Petition unterschreiben","Beim Bürgermeister eine Genehmigung beantragen","Den Bau finanziell unterstützen"],"correct_index":1,"explanation":"'Sich an einer Online-Petition beteiligen' = digital unterschreiben."},{"id":183,"category":"Grammatik","text":"Die Daten ___ vor dem Angriff gesichert worden.","options":["waren","sind","wurden","haben"],"correct_index":0,"explanation":"Passiv Plusquamperfekt Plural: 'waren' + Partizip II + 'worden'."},{"id":184,"category":"Grammatik","text":"Ich ___ ihr leider nicht helfen, weil ich keine Zeit hatte.","options":["konnte","kann","könnte","können"],"correct_index":0,"explanation":"Modalverb Präteritum: 'können' → 'konnte'."},{"id":185,"category":"Grammatik","text":"Ich bin unsicher, ___ ich den Kurs online oder vor Ort machen soll.","options":["dass","ob","wann","wie"],"correct_index":1,"explanation":"'Ob' leitet eine indirekte Alternativfrage ein (Unsicherheit)."},{"id":186,"category":"Vokabeln","text":"Was ist 'das soziale Netzwerk'?","options":["Ein Computerbetriebssystem","Eine Online-Plattform zum Austausch mit anderen Nutzern","Ein lokales WLAN-Netzwerk","Eine Datenbank für Unternehmen"],"correct_index":1,"explanation":"'Soziales Netzwerk' = Internet-Plattform für Kommunikation und Austausch (z. B. Facebook)."},{"id":187,"category":"Grammatik","text":"Das Spiel ___ wegen Regens abgebrochen.","options":["wurde","wird","ist","hat"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II."},{"id":188,"category":"Grammatik","text":"Er ___ früher viel besser schwimmen.","options":["konnte","kann","könnte","gekonnt"],"correct_index":0,"explanation":"Modalverb Präteritum: 'können' → 'konnte'. 'Früher' = Vergangenheit."},{"id":189,"category":"Grammatik","text":"Wissen Sie, ___ der Laden heute geöffnet hat?","options":["wann","ob","dass","wie"],"correct_index":1,"explanation":"Indirekte Ja/Nein-Frage: 'ob' + Verb am Satzende."},{"id":190,"category":"Vokabeln","text":"Was bedeutet 'die Wahlbeteiligung'?","options":["Die Anzahl der Kandidaten bei einer Wahl","Der Prozentsatz der Bürger, die tatsächlich wählen gehen","Das Ergebnis einer Wahl","Die Dauer des Wahlkampfs"],"correct_index":1,"explanation":"'Wahlbeteiligung' = Anteil der Wahlberechtigten, die ihre Stimme abgeben."},{"id":191,"category":"Grammatik","text":"Der Strom ___ für drei Stunden abgeschaltet.","options":["wurde","wird","ist","war"],"correct_index":0,"explanation":"Passiv Präteritum: 'wurde' + Partizip II (abgeschlossene Handlung)."},{"id":192,"category":"Grammatik","text":"Sie ___ den Bericht bis Freitag abgeben.","options":["sollte","soll","solltet","gesollt"],"correct_index":0,"explanation":"Modalverb Präteritum: 'sollen' → 'sollte' (Anweisung in der Vergangenheit)."},{"id":193,"category":"Grammatik","text":"Er will wissen, ___ die Ergebnisse veröffentlicht werden.","options":["ob","wann","dass","beide A und B sind möglich"],"correct_index":3,"explanation":"Sowohl 'ob' (Ja/Nein) als auch 'wann' (Zeitpunkt) sind kontextabhängig korrekt."},{"id":194,"category":"Vokabeln","text":"Welches Wort passt? 'Die Datei ist zu groß. Ich muss sie erst ___.'","options":["komprimieren","installieren","formatieren","deinstallieren"],"correct_index":0,"explanation":"'Komprimieren' = die Dateigröße verkleinern (z. B. als ZIP)."},{"id":195,"category":"Grammatik","text":"Die Einladungen ___ letzte Woche verschickt worden.","options":["sind","waren","wurden","haben"],"correct_index":0,"explanation":"Passiv Perfekt: 'sind' + Partizip II + 'worden'."},{"id":196,"category":"Grammatik","text":"Wir ___ damals nicht ins Ausland reisen, weil wir kein Visum hatten.","options":["konnten","können","könnten","gekonnt"],"correct_index":0,"explanation":"Modalverb Präteritum Plural: 'können' → 'konnten'."},{"id":197,"category":"Grammatik","text":"Ich frage mich, ___ er die Nachricht gelesen hat.","options":["dass","ob","weil","wenn"],"correct_index":1,"explanation":"Indirekte Ja/Nein-Frage: 'ob' drückt Unsicherheit aus."},{"id":198,"category":"Leseverstehen","text":"'Der Gemeinderat hat beschlossen, einen neuen Spielplatz im Stadtteil Ost zu errichten.' — Was wurde entschieden?","options":["Ein Spielplatz wird abgerissen.","Ein neuer Spielplatz wird gebaut.","Der Gemeinderat tritt zurück.","Der Stadtteil wird umbenannt."],"correct_index":1,"explanation":"'Errichten' = bauen/aufbauen. Beschluss: neuer Spielplatz wird gebaut."},{"id":199,"category":"Vokabeln","text":"Was bedeutet 'die Fake News'?","options":["Besonders wichtige Nachrichten","Bewusst verbreitete Falschinformationen","Nachrichten aus dem Ausland","Satirische Zeitungsartikel"],"correct_index":1,"explanation":"'Fake News' = absichtlich verbreitete falsche Nachrichten zur Manipulation."},{"id":200,"category":"Grammatik","text":"Hast du eine Idee, ___ wir das Problem lösen können?","options":["ob","wie","dass","wann"],"correct_index":1,"explanation":"Indirekte W-Frage nach der Methode: 'wie' + Verb am Satzende."},{"id":201,"category":"Grammatik","text":"Ich habe ___ Kollegen eine E-Mail geschickt.","options":["dem neuen","den neuen","der neuen","des neuen"],"correct_index":0,"explanation":"N-Deklination + schwache Adj.-Dekl.: 'Kollege' ist N-Deklination-Nomen, Dativ Singular → 'dem neuen Kollegen'."},{"id":202,"category":"Grammatik","text":"Das ist der Tisch, ___ die Vase steht.","options":["auf dem","auf den","an dem","über dem"],"correct_index":0,"explanation":"Relativsatz mit Präposition: 'stehen auf' + Dat. (Ort) → 'auf dem' (Mask. Dat.)."},{"id":203,"category":"Grammatik","text":"Er spricht ___ Deutsch ___ Französisch.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":0,"explanation":"'Sowohl ... als auch' = beides: Er spricht beide Sprachen (additiv)."},{"id":204,"category":"Grammatik","text":"___ Kaffee schmeckt am besten frisch gebrüht.","options":["Starker","Starken","Starkem","Starkes"],"correct_index":0,"explanation":"Starke Deklination ohne Artikel, Nom. Mask.: starker Kaffee."},{"id":205,"category":"Grammatik","text":"Ich kenne ___ Studenten seit dem ersten Semester.","options":["den","dem","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Student' → Akk. Sing. 'den Studenten' (schwaches Maskulinum)."},{"id":206,"category":"Grammatik","text":"Die Brücke, ___ wir jeden Tag fahren, wird renoviert.","options":["über die","über der","über dem","auf die"],"correct_index":0,"explanation":"Relativsatz: 'fahren über' + Akk. (Richtung) → 'über die' (Fem. Akk.)."},{"id":207,"category":"Grammatik","text":"Das Essen war ___ gut ___ billig — es war leider beides nicht.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":1,"explanation":"'Weder ... noch' = keines von beiden. Negation beider Eigenschaften."},{"id":208,"category":"Grammatik","text":"Sie hat sich ein Kleid aus ___ Seide gekauft.","options":["reiner","reine","reinem","reinen"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel, Dat. Fem.: aus reiner Seide."},{"id":209,"category":"Grammatik","text":"Bitte geben Sie ___ Herrn Müller die Unterlagen.","options":["dem","den","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Herr' → Dat. 'dem Herrn' (+ Name bleibt unverändert)."},{"id":210,"category":"Grammatik","text":"Das Thema, ___ wir gesprochen haben, war sehr aktuell.","options":["über das","über dem","für das","an das"],"correct_index":0,"explanation":"Relativsatz: 'sprechen über' + Akk. → 'über das' (Neutrum Akk.)."},{"id":211,"category":"Grammatik","text":"___ mehr man übt, ___ besser wird man.","options":["Je ... desto","Sowohl ... als auch","Weder ... noch","Zwar ... aber"],"correct_index":0,"explanation":"'Je ... desto' drückt eine proportionale Steigerung aus: Je mehr → desto besser."},{"id":212,"category":"Grammatik","text":"Er schenkte ___ Freundin ___ Blumen.","options":["seiner netten / rote","seiner netten / roten","seine nette / rote","seiner nette / roten"],"correct_index":0,"explanation":"Dat. Fem. (gemischt): seiner netten Freundin. Akk. Pl. ohne Artikel (stark): rote Blumen."},{"id":213,"category":"Grammatik","text":"Das Herz ___ Patienten schlug regelmäßig.","options":["des","dem","den","der"],"correct_index":0,"explanation":"N-Deklination: 'Patient' → Gen. 'des Patienten'."},{"id":214,"category":"Grammatik","text":"Die Kollegin, ___ ich mich gestritten habe, hat sich entschuldigt.","options":["mit der","mit die","mit dem","über die"],"correct_index":0,"explanation":"Relativsatz: 'sich streiten mit' + Dat. → 'mit der' (Fem. Dat.)."},{"id":215,"category":"Grammatik","text":"Der Film ist ___ spannend, ___ er ist auch sehr lang.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","je ... desto"],"correct_index":2,"explanation":"'Zwar ... aber' = Einräumung + Einschränkung: spannend, jedoch auch lang."},{"id":216,"category":"Grammatik","text":"Trotz ___ Regens gingen wir spazieren.","options":["starken","starker","starkem","starkes"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel, Gen. Mask.: trotz starken Regens."},{"id":217,"category":"Grammatik","text":"Wir müssen ___ Namen des Kunden notieren.","options":["den","dem","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Name' → Akk. 'den Namen' (schwaches Maskulinum mit -n)."},{"id":218,"category":"Grammatik","text":"Der Park, ___ wir oft joggen, wird umgebaut.","options":["in dem","in den","auf dem","an dem"],"correct_index":0,"explanation":"Relativsatz: 'joggen in' + Dat. (Ort) → 'in dem' (Mask. Dat.)."},{"id":219,"category":"Grammatik","text":"Sie trinkt ___ Tee ___ Kaffee — nur Wasser.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":1,"explanation":"'Weder ... noch' negiert beide Optionen: kein Tee und kein Kaffee."},{"id":220,"category":"Grammatik","text":"Wir suchen einen Tisch mit ___ Stühlen.","options":["bequemen","bequeme","bequemer","bequemem"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel, Dat. Plural: mit bequemen Stühlen."},{"id":221,"category":"Grammatik","text":"Die Meinung ___ Experten ist sehr gefragt.","options":["des","dem","den","der"],"correct_index":0,"explanation":"N-Deklination: 'Experte' → Gen. 'des Experten'."},{"id":222,"category":"Grammatik","text":"Die Firma, ___ er sich beworben hat, ist sehr bekannt.","options":["bei der","bei die","für die","an der"],"correct_index":0,"explanation":"Relativsatz: 'sich bewerben bei' + Dat. → 'bei der' (Fem. Dat.)."},{"id":223,"category":"Grammatik","text":"___ länger man wartet, ___ schwieriger wird die Entscheidung.","options":["Je ... desto","Sowohl ... als auch","Zwar ... aber","Weder ... noch"],"correct_index":0,"explanation":"'Je ... desto' + Komparativ: proportionaler Zusammenhang."},{"id":224,"category":"Grammatik","text":"Mit ___ Willen kann man viel erreichen.","options":["gutem","guten","guter","gutes"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel, Dat. Mask.: mit gutem Willen."},{"id":225,"category":"Grammatik","text":"Ich habe ___ Nachbarn um Hilfe gebeten.","options":["den","dem","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Nachbar' → Akk. 'den Nachbarn'. 'Bitten' verlangt Akk."},{"id":226,"category":"Grammatik","text":"Die Schule, ___ sie als Kind gegangen ist, existiert noch.","options":["in die","in der","auf die","zu der"],"correct_index":2,"explanation":"Relativsatz: 'auf eine Schule gehen' → Akk. (Richtung): 'auf die' (Fem. Akk.)."},{"id":227,"category":"Grammatik","text":"Du kannst ___ den Bus ___ die Straßenbahn nehmen — beides fährt dorthin.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":0,"explanation":"'Sowohl ... als auch' = beide Optionen sind möglich (additiv)."},{"id":228,"category":"Grammatik","text":"Sie hat ein Haus mit ___ Garten gekauft.","options":["großem","großen","großer","großes"],"correct_index":0,"explanation":"Gemischte Dekl. (nach 'einem' implizit), Dat. Mask. ohne Artikel: mit großem Garten."},{"id":229,"category":"Grammatik","text":"Die Arbeit ___ Praktikanten war ausgezeichnet.","options":["des","dem","den","der"],"correct_index":0,"explanation":"N-Deklination: 'Praktikant' → Gen. 'des Praktikanten'."},{"id":230,"category":"Grammatik","text":"Der Stuhl, ___ er den ganzen Tag sitzt, ist sehr unbequem.","options":["auf dem","auf den","an dem","in dem"],"correct_index":0,"explanation":"Relativsatz: 'sitzen auf' + Dat. (Ort) → 'auf dem' (Mask. Dat.)."},{"id":231,"category":"Grammatik","text":"Er will ___ studieren ___ eine Ausbildung machen — er hat sich noch nicht entschieden.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":3,"explanation":"'Entweder ... oder' = eine von zwei Möglichkeiten (Alternativwahl)."},{"id":232,"category":"Grammatik","text":"Das Ergebnis ___ Experiments überraschte alle.","options":["des interessanten","dem interessanten","den interessanten","das interessante"],"correct_index":0,"explanation":"Schwache Dekl. Gen. Neutr. nach 'des': des interessanten Experiments."},{"id":233,"category":"Grammatik","text":"Er hat ___ Jungen ein Geschenk gegeben.","options":["dem","den","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Junge' → Dat. 'dem Jungen'. 'Geben' + Dat. (Person)."},{"id":234,"category":"Grammatik","text":"Die Ärztin, ___ ich mich erkundigt habe, hat gute Bewertungen.","options":["nach der","nach die","über die","für die"],"correct_index":0,"explanation":"Relativsatz: 'sich erkundigen nach' + Dat. → 'nach der' (Fem. Dat.)."},{"id":235,"category":"Grammatik","text":"Die Aufgabe ist ___ kompliziert, ___ sie ist lösbar.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","je ... desto"],"correct_index":2,"explanation":"'Zwar ... aber' = Einräumung (kompliziert) + Gegenargument (lösbar)."},{"id":236,"category":"Grammatik","text":"In ___ Lage würde ich genauso handeln.","options":["deiner schwierigen","deiner schwierige","deine schwierige","deinem schwierigen"],"correct_index":0,"explanation":"Gemischte Dekl. Dat. Fem. nach Possessiv: in deiner schwierigen Lage."},{"id":237,"category":"Grammatik","text":"Das Büro ___ Architekten befindet sich im dritten Stock.","options":["des","dem","den","der"],"correct_index":0,"explanation":"N-Deklination: 'Architekt' → Gen. 'des Architekten'."},{"id":238,"category":"Grammatik","text":"Das Hotel, ___ wir uns beschwert haben, hat uns eine Entschädigung angeboten.","options":["bei dem","bei das","über dem","an dem"],"correct_index":0,"explanation":"Relativsatz: 'sich beschweren bei' + Dat. → 'bei dem' (Neutr. Dat.)."},{"id":239,"category":"Grammatik","text":"___ schneller er fährt, ___ gefährlicher wird es.","options":["Je ... desto","Sowohl ... als auch","Zwar ... aber","Entweder ... oder"],"correct_index":0,"explanation":"'Je ... desto' + Komparativ: proportionale Zunahme von Geschwindigkeit und Gefahr."},{"id":240,"category":"Grammatik","text":"Er aß einen Salat mit ___ Tomaten und ___ Öl.","options":["frischen / gutem","frische / gutem","frischen / guten","frischer / guter"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel: Dat. Pl. 'mit frischen Tomaten' + Dat. Neutr. 'gutem Öl'."},{"id":241,"category":"Grammatik","text":"Wir sollten ___ Automaten nach dem Weg fragen.","options":["den","dem","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Automat' → Akk. 'den Automaten'. 'Fragen' + Akk."},{"id":242,"category":"Grammatik","text":"Die Konferenz, ___ Teilnehmer aus zehn Ländern kamen, war ein Erfolg.","options":["zu der","an der","bei der","für die"],"correct_index":0,"explanation":"Relativsatz: 'kommen zu' + Dat. → 'zu der' (Fem. Dat.)."},{"id":243,"category":"Grammatik","text":"Sie kann ___ kochen ___ backen — beides macht sie nicht gern.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":1,"explanation":"'Weder ... noch' = keines von beiden: kein Kochen und kein Backen."},{"id":244,"category":"Grammatik","text":"Auf dem Tisch stand eine Vase mit ___ Blumen.","options":["bunten","bunte","bunter","buntem"],"correct_index":0,"explanation":"Starke Dekl. ohne Artikel, Dat. Plural: mit bunten Blumen."},{"id":245,"category":"Grammatik","text":"Die Aussage ___ Zeugen war entscheidend für das Urteil.","options":["des","dem","den","der"],"correct_index":0,"explanation":"N-Deklination: 'Zeuge' → Gen. 'des Zeugen'."},{"id":246,"category":"Grammatik","text":"Der Verein, ___ sie seit Jahren Mitglied ist, feiert Jubiläum.","options":["in dem","in den","bei dem","an dem"],"correct_index":0,"explanation":"Relativsatz: 'Mitglied sein in' + Dat. → 'in dem' (Mask. Dat.)."},{"id":247,"category":"Grammatik","text":"___ öfter ich das Lied höre, ___ besser gefällt es mir.","options":["Je ... desto","Sowohl ... als auch","Zwar ... aber","Weder ... noch"],"correct_index":0,"explanation":"'Je ... desto' + Komparativ: proportionaler Anstieg von Häufigkeit und Gefallen."},{"id":248,"category":"Grammatik","text":"Er schrieb einen Brief an ___ Präsidenten.","options":["den","dem","der","des"],"correct_index":0,"explanation":"N-Deklination: 'Präsident' → Akk. 'den Präsidenten'. 'An' + Akk. (Richtung)."},{"id":249,"category":"Grammatik","text":"Die Wohnung, ___ er sich entschieden hat, liegt zentral.","options":["für die","für der","auf die","über die"],"correct_index":0,"explanation":"Relativsatz: 'sich entscheiden für' + Akk. → 'für die' (Fem. Akk.)."},{"id":250,"category":"Grammatik","text":"Er hat das Buch ___ gelesen ___ zurückgegeben — es liegt noch auf seinem Schreibtisch.","options":["sowohl ... als auch","weder ... noch","zwar ... aber","entweder ... oder"],"correct_index":1,"explanation":"'Weder ... noch' = keines: nicht gelesen und nicht zurückgegeben."},{"id":251,"category":"Vokabeln","text":"Der Vorstand hat eine wichtige ___ getroffen.","options":["Entscheidung","Entschluss","Bescheid","Erklärung"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'eine Entscheidung treffen' = sich entscheiden."},{"id":252,"category":"Vokabeln","text":"Bitte ___ Sie den Hörer nicht auf, ich verbinde Sie weiter.","options":["legen","stellen","setzen","hängen"],"correct_index":0,"explanation":"'Den Hörer auflegen' = das Telefonat beenden. Hier: Bitte nicht auflegen."},{"id":253,"category":"Vokabeln","text":"Welches Wort passt? 'Das ___ Wasser darf nicht berührt werden.'","options":["kochende","gekochte","kochte","kochen"],"correct_index":0,"explanation":"Partizip I als Adjektiv: 'kochend' = Wasser, das gerade kocht (aktiv, gleichzeitig)."},{"id":254,"category":"Vokabeln","text":"Ich ___ ihn seit der Schulzeit, aber ich ___ nicht, wo er jetzt wohnt.","options":["kenne / weiß","weiß / kenne","kenne / kenne","weiß / weiß"],"correct_index":0,"explanation":"'Kennen' = vertraut sein mit einer Person. 'Wissen' = eine Information haben."},{"id":255,"category":"Vokabeln","text":"Der Projektleiter muss noch ___ zum Zeitplan nehmen.","options":["Stellung","Platz","Stelle","Stand"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'Stellung nehmen zu' = sich offiziell äußern."},{"id":256,"category":"Vokabeln","text":"Wie beendet man eine formelle E-Mail auf Deutsch?","options":["Mit freundlichen Grüßen","Tschüss","Bis dann","Mach's gut"],"correct_index":0,"explanation":"'Mit freundlichen Grüßen' ist die Standardschlussformel formeller E-Mails."},{"id":257,"category":"Vokabeln","text":"Welches Wort passt? 'Die ___ Tür ließ kalte Luft herein.'","options":["geöffnete","öffnende","öffnete","geöffnet"],"correct_index":0,"explanation":"Partizip II als Adjektiv: 'geöffnet' = die Tür ist bereits offen (Zustand/Resultat)."},{"id":258,"category":"Vokabeln","text":"___ das Buch bitte auf den Tisch. Es soll dort ___.","options":["Leg / liegen","Lieg / legen","Stell / stehen","Leg / legen"],"correct_index":0,"explanation":"'Legen' (transitiv, Akk.) = in horizontale Position bringen. 'Liegen' (intransitiv) = sich dort befinden."},{"id":259,"category":"Vokabeln","text":"Die Firma hat einen neuen Vertrag ___ Abschluss gebracht.","options":["zum","zur","in","auf"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'zum Abschluss bringen' = abschließen, beenden."},{"id":260,"category":"Vokabeln","text":"Welcher Satz ist korrekt für einen geschäftlichen Anruf?","options":["Guten Tag, hier spricht Müller von der Firma XY.","Hey, ich bin's, der Müller.","Ja hallo, was gibt's?","Wer ist da?"],"correct_index":0,"explanation":"Formelle Telefonmeldung: Begrüßung + Name + Firma."},{"id":261,"category":"Vokabeln","text":"Ein ___ Passagier wurde ins Krankenhaus gebracht.","options":["verletzter","verletzender","verletzte","verletzten"],"correct_index":0,"explanation":"Partizip II als Adjektiv, starke Dekl. Nom. Mask. ohne Artikel: verletzter Passagier."},{"id":262,"category":"Vokabeln","text":"Meine Schwester ___ Medizin in München. Mein Bruder ___ gerade für seinen Führerschein.","options":["studiert / lernt","lernt / studiert","studiert / studiert","lernt / lernt"],"correct_index":0,"explanation":"'Studieren' = an einer Hochschule. 'Lernen' = sich Wissen/Fähigkeiten aneignen (allgemein)."},{"id":263,"category":"Vokabeln","text":"Der Minister hat eine ___ abgegeben.","options":["Erklärung","Erkundigung","Erfahrung","Erlaubnis"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'eine Erklärung abgeben' = offiziell etwas erklären."},{"id":264,"category":"Vokabeln","text":"Welche Formulierung passt in eine formelle E-Mail? 'Ich schreibe Ihnen ___ Ihrer Stellenanzeige.'","options":["bezüglich","weil","trotzdem","obwohl"],"correct_index":0,"explanation":"'Bezüglich' + Gen. = formelle Angabe des Betreffs. Typisch für Geschäftskorrespondenz."},{"id":265,"category":"Vokabeln","text":"Das ___ Kind schlief friedlich im Arm der Mutter.","options":["schlafende","geschlafene","schlafene","schlafendes"],"correct_index":0,"explanation":"Partizip I als Adjektiv, schwache Dekl. Nom. Neutr. nach 'das': das schlafende Kind."},{"id":266,"category":"Vokabeln","text":"___ die Flasche bitte in den Kühlschrank. Sie soll dort ___.","options":["Stell / stehen","Steh / stellen","Leg / liegen","Setz / sitzen"],"correct_index":0,"explanation":"'Stellen' (transitiv, Akk.) = vertikal platzieren. 'Stehen' (intransitiv) = sich dort befinden."},{"id":267,"category":"Vokabeln","text":"Der Chef hat den Plan in ___ gestellt.","options":["Frage","Antwort","Rede","Wort"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'in Frage stellen' = bezweifeln, anzweifeln."},{"id":268,"category":"Vokabeln","text":"Was sagt man am Telefon, wenn man jemanden weiterverbinden möchte?","options":["Einen Moment bitte, ich verbinde Sie.","Warten Sie mal kurz, ich guck nach.","Keine Ahnung, rufen Sie nochmal an.","Der ist gerade nicht da, tschüss."],"correct_index":0,"explanation":"'Einen Moment bitte, ich verbinde Sie' ist die professionelle Formulierung beim Weiterverbinden."},{"id":269,"category":"Vokabeln","text":"Welches Wort passt? 'Der frisch ___ Kuchen duftet herrlich.'","options":["gebackene","backende","gebacken","backte"],"correct_index":0,"explanation":"Partizip II als Adjektiv: 'gebacken' = Kuchen ist fertig (Resultat). Schwache Dekl. nach 'der'."},{"id":270,"category":"Vokabeln","text":"Er hat mich in dem Meeting nicht ___. Dabei habe ich ihn gut ___.","options":["erkannt / gekannt","gekannt / erkannt","gewusst / gekannt","erkannt / gewusst"],"correct_index":0,"explanation":"'Erkennen' = wiedererkennen (visuell). 'Kennen' = mit jemandem vertraut sein."},{"id":271,"category":"Vokabeln","text":"Die Abteilungsleiterin hat ___ darauf genommen, alle Meinungen zu hören.","options":["Rücksicht","Vorsicht","Absicht","Aussicht"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'Rücksicht nehmen auf' = berücksichtigen, beachten."},{"id":272,"category":"Leseverstehen","text":"'Anbei sende ich Ihnen die gewünschten Unterlagen. Für Rückfragen stehe ich Ihnen gerne zur Verfügung.' — Was ist das?","options":["Eine WhatsApp-Nachricht","Eine formelle Geschäfts-E-Mail","Ein privater Brief","Eine Beschwerde"],"correct_index":1,"explanation":"'Anbei', 'gewünschte Unterlagen', 'zur Verfügung stehen' = typische formelle E-Mail-Sprache."},{"id":273,"category":"Vokabeln","text":"Die ___ Sonne wärmte die Terrasse.","options":["scheinende","geschienene","scheinene","gescheinende"],"correct_index":0,"explanation":"Partizip I als Adjektiv: 'scheinend' = die Sonne, die gerade scheint (aktiv, gleichzeitig)."},{"id":274,"category":"Vokabeln","text":"Wo ___ meine Brille? Ich habe sie doch auf den Tisch ___.","options":["liegt / gelegt","legt / gelegen","steht / gestellt","liegt / gelegen"],"correct_index":0,"explanation":"'Liegen' = horizontale Position (Zustand). 'Legen' = dorthin bringen (Aktion). Perfekt: gelegt."},{"id":275,"category":"Vokabeln","text":"Wir müssen eine Lösung für das Problem in ___ ziehen.","options":["Betracht","Frage","Kauf","Anspruch"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'in Betracht ziehen' = erwägen, berücksichtigen."},{"id":276,"category":"Vokabeln","text":"Welche Betreffzeile passt zu einer formellen E-Mail? 'Anfrage ___ Ihres Seminarangebots'","options":["bezüglich","über","von","mit"],"correct_index":0,"explanation":"'Bezüglich' + Gen. ist die formelle Standardpräposition in E-Mail-Betreffzeilen."},{"id":277,"category":"Vokabeln","text":"Die ___ Gäste nahmen im Saal Platz.","options":["eingeladenen","einladenden","eingeladene","einladende"],"correct_index":0,"explanation":"Partizip II als Adjektiv, schwache Dekl. Nom. Pl. nach 'die': die eingeladenen Gäste."},{"id":278,"category":"Vokabeln","text":"Ich ___ nicht, ob das stimmt. Aber ich ___ einen Experten, den ich fragen kann.","options":["weiß / kenne","kenne / weiß","weiß / weiß","kenne / kenne"],"correct_index":0,"explanation":"'Wissen' = Faktenwissen haben. 'Kennen' = mit einer Person vertraut sein."},{"id":279,"category":"Vokabeln","text":"Die Regierung hat Maßnahmen zur Bekämpfung der Inflation ___.","options":["ergriffen","gestellt","genommen","gebracht"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'Maßnahmen ergreifen' = Maßnahmen einleiten/umsetzen."},{"id":280,"category":"Vokabeln","text":"Was bedeutet 'Ich bin leider gerade nicht erreichbar. Bitte hinterlassen Sie eine Nachricht.'?","options":["Eine Mailbox-Ansage / Anrufbeantworter","Eine SMS-Antwort","Eine automatische E-Mail","Ein Chat-Status"],"correct_index":0,"explanation":"Typische Ansage auf dem Anrufbeantworter (Mailbox): nicht erreichbar + Nachricht hinterlassen."},{"id":281,"category":"Vokabeln","text":"Er reparierte das Auto mit ___ Werkzeug. (= das Werkzeug fehlte teilweise)","options":["fehlendem","gefehlendem","gefehlt","fehlende"],"correct_index":0,"explanation":"Partizip I als Adjektiv, starke Dekl. Dat. Neutr. ohne Artikel: mit fehlendem Werkzeug."},{"id":282,"category":"Vokabeln","text":"Das Kind ___ auf dem Stuhl. Die Mutter hat es dorthin ___.","options":["sitzt / gesetzt","setzt / gesessen","sitzt / gesitzen","setzt / gesetzt"],"correct_index":0,"explanation":"'Sitzen' (intransitiv) = Zustand. 'Setzen' (transitiv, Akk.) = in Sitzposition bringen."},{"id":283,"category":"Vokabeln","text":"Der Anwalt hat ___ gegen das Urteil eingelegt.","options":["Berufung","Rechnung","Bewerbung","Bestellung"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'Berufung einlegen' = juristisch gegen ein Urteil vorgehen."},{"id":284,"category":"Vokabeln","text":"Welche Anrede ist korrekt für eine formelle E-Mail an eine unbekannte Person?","options":["Sehr geehrte Damen und Herren,","Hallo zusammen,","Liebe Grüße,","Hi,"],"correct_index":0,"explanation":"'Sehr geehrte Damen und Herren' = formelle Standardanrede bei unbekanntem Empfänger."},{"id":285,"category":"Vokabeln","text":"Das ist ein gut ___ Argument.","options":["durchdachtes","durchdenkendes","durchgedachtes","durchdachte"],"correct_index":0,"explanation":"Partizip II als Adjektiv, gemischte Dekl. Nom. Neutr. nach 'ein': ein durchdachtes Argument."},{"id":286,"category":"Vokabeln","text":"Er ___ an der Universität Hamburg. Er ___ jeden Abend für die Klausuren.","options":["studiert / lernt","lernt / studiert","studiert / studiert","lernt / lernt"],"correct_index":0,"explanation":"'Studieren' = immatrikuliert an einer Hochschule sein. 'Lernen' = Stoff wiederholen/einprägen."},{"id":287,"category":"Vokabeln","text":"Die Verhandlungen haben zu einem Ergebnis ___.","options":["geführt","gebracht","gestellt","getroffen"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'zu einem Ergebnis führen' = ein Ergebnis hervorbringen."},{"id":288,"category":"Vokabeln","text":"Welcher Satz passt in eine E-Mail-Erinnerung? 'Ich erlaube mir, Sie an ___ vom 5. Mai zu erinnern.'","options":["unser Gespräch","unseres Gespräch","unserem Gespräch","unseren Gespräch"],"correct_index":0,"explanation":"'Erinnern an' + Akk. → 'an unser Gespräch' (Neutr. Akk.)."},{"id":289,"category":"Vokabeln","text":"Die ___ Nachbarn beschwerten sich über den Lärm.","options":["genervten","nervenden","genervte","nervende"],"correct_index":0,"explanation":"Partizip II als Adjektiv: 'genervt' = die Nachbarn sind genervt (Zustand). Schwache Dekl. Nom. Pl."},{"id":290,"category":"Vokabeln","text":"Wo ___ die Lampe? — Ich habe sie auf den Schreibtisch ___.","options":["steht / gestellt","stellt / gestanden","liegt / gelegt","steht / gestanden"],"correct_index":0,"explanation":"'Stehen' (intransitiv) = vertikale Position. 'Stellen' (transitiv) = vertikal platzieren."},{"id":291,"category":"Vokabeln","text":"Der Redner hat eine lange ___ gehalten.","options":["Rede","Sprache","Stimme","Aussage"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'eine Rede halten' = vor Publikum sprechen."},{"id":292,"category":"Leseverstehen","text":"'Bitte bestätigen Sie den Termin bis spätestens Freitag, 12:00 Uhr. Andernfalls wird der Termin automatisch storniert.' — Was passiert, wenn man nicht antwortet?","options":["Der Termin wird verschoben.","Der Termin wird abgesagt.","Man bekommt eine Erinnerung.","Der Termin wird bestätigt."],"correct_index":1,"explanation":"'Automatisch storniert' = bei Nichtbestätigung wird der Termin abgesagt."},{"id":293,"category":"Vokabeln","text":"Der ___ Motor verursachte den Unfall.","options":["überhitzte","überhitzende","überhitzen","überhitzter"],"correct_index":0,"explanation":"Partizip II als Adjektiv, schwache Dekl. Nom. Mask. nach 'der': der überhitzte Motor."},{"id":294,"category":"Vokabeln","text":"Viele Lerner verwechseln: 'Ich ___ das Buch gut' (= es gefällt mir) vs. 'Ich ___ das Buch gut' (= Inhalt ist mir bekannt).","options":["finde / kenne","kenne / finde","weiß / kenne","kenne / weiß"],"correct_index":0,"explanation":"'Finden' + Adj. = bewerten/einschätzen. 'Kennen' = vertraut sein mit dem Inhalt."},{"id":295,"category":"Vokabeln","text":"Er hat den Antrag auf Förderung ___.","options":["gestellt","gemacht","gegeben","gelegt"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'einen Antrag stellen' = offiziell etwas beantragen."},{"id":296,"category":"Vokabeln","text":"Welche Formulierung ist für eine E-Mail-Bitte angemessen?","options":["Wären Sie so freundlich, mir die Unterlagen zuzusenden?","Schick mir mal die Unterlagen.","Ich brauche die Unterlagen sofort.","Gib mir die Unterlagen."],"correct_index":0,"explanation":"'Wären Sie so freundlich' = höfliche Konjunktiv-II-Formulierung für formelle Bitten."},{"id":297,"category":"Vokabeln","text":"Die ___ Kosten überraschten alle Beteiligten.","options":["steigenden","gestiegenen","steigende","gestiegene"],"correct_index":0,"explanation":"Partizip I als Adjektiv, schwache Dekl. Nom. Pl. nach 'die': die steigenden Kosten (= Kosten steigen gerade)."},{"id":298,"category":"Vokabeln","text":"Ich habe den Schlüssel auf das Regal ___. Jetzt ___ er dort oben.","options":["gelegt / liegt","gelegen / legt","gelegt / legt","gelegen / liegt"],"correct_index":0,"explanation":"'Legen' (Perfekt: gelegt) = platzieren. 'Liegen' = sich dort befinden (Zustand)."},{"id":299,"category":"Vokabeln","text":"Die Gewerkschaft hat ___ gegen die Kürzungen erhoben.","options":["Einspruch","Anspruch","Ausspruch","Zuspruch"],"correct_index":0,"explanation":"Nomen-Verb-Verbindung: 'Einspruch erheben' = offiziell Widerspruch einlegen."},{"id":300,"category":"Leseverstehen","text":"'Im Anhang finden Sie das unterzeichnete Protokoll der letzten Sitzung. Bitte leiten Sie es an die betreffenden Kollegen weiter.' — Was wird erwartet?","options":["Das Protokoll soll an bestimmte Kollegen weitergegeben werden.","Das Protokoll soll gelöscht werden.","Das Protokoll soll neu geschrieben werden.","Das Protokoll soll ausgedruckt werden."],"correct_index":0,"explanation":"'Weiterleiten an die betreffenden Kollegen' = das Dokument an die relevanten Personen senden."}];
+
+const CATS = {
+  'Grammatik':    { icon:'📝', color:'rgba(99,140,255,0.15)', textColor:'#6b8cff' },
+  'Vokabeln':     { icon:'📖', color:'rgba(255,165,2,0.15)', textColor:'#ffa502' },
+  'Leseverstehen':{ icon:'📰', color:'rgba(46,213,115,0.15)', textColor:'#2ed573' }
+};
+
+const LETTERS = ['A','B','C','D'];
+
+const app = {
+  questions: [],
+  index: 0,
+  score: 0,
+  selected: null,
+  confirmed: false,
+  records: [],
+
+  init() {
+    this.buildCatGrid();
+    this.loadStats();
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    }
+  },
+
+  buildCatGrid() {
+    const grid = document.getElementById('catGrid');
+    const counts = {};
+    ALL_QUESTIONS.forEach(q => counts[q.category] = (counts[q.category]||0) + 1);
+
+    let html = '';
+    for(const [cat, meta] of Object.entries(CATS)){
+      if(!counts[cat]) continue;
+      html += `<button class="cat-btn" onclick="app.start('${cat}')">
+        <div class="cat-icon" style="background:${meta.color};color:${meta.textColor}">${meta.icon}</div>
+        <span>${cat}</span>
+        <span class="cat-count">${counts[cat]}</span>
+        <span class="chevron">›</span>
+      </button>`;
+    }
+    html += `<button class="cat-btn" onclick="app.start(null)">
+      <div class="cat-icon" style="background:rgba(233,69,96,0.15);color:var(--accent)">🎯</div>
+      <span>Alle Kategorien</span>
+      <span class="cat-count">${ALL_QUESTIONS.length}</span>
+      <span class="chevron">›</span>
+    </button>`;
+    grid.innerHTML = html;
+  },
+
+  start(cat) {
+    let pool = cat ? ALL_QUESTIONS.filter(q => q.category === cat) : [...ALL_QUESTIONS];
+    this.questions = this.shuffle(pool);
+    this.index = 0;
+    this.score = 0;
+    this.selected = null;
+    this.confirmed = false;
+    this.records = [];
+    this.show('quiz');
+    this.render();
+  },
+
+  retryWrong() {
+    const wrong = this.records.filter(r => !r.correct).map(r => r.question);
+    if(!wrong.length) return;
+    this.questions = this.shuffle(wrong);
+    this.index = 0;
+    this.score = 0;
+    this.selected = null;
+    this.confirmed = false;
+    this.records = [];
+    this.show('quiz');
+    this.render();
+  },
+
+  render() {
+    const q = this.questions[this.index];
+    const total = this.questions.length;
+
+    document.getElementById('qScore').textContent = this.score;
+    document.getElementById('qCounter').textContent = `${this.index + 1} / ${total}`;
+    document.getElementById('qProgress').style.width = `${(this.index / total) * 100}%`;
+
+    const catEl = document.getElementById('qCat');
+    catEl.textContent = q.category;
+    catEl.className = 'q-category ' + q.category;
+
+    document.getElementById('qText').textContent = q.text;
+
+    let optsHtml = '';
+    q.options.forEach((opt, i) => {
+      optsHtml += `<button class="opt-btn" data-i="${i}" onclick="app.select(${i})">
+        <span class="opt-letter">${LETTERS[i]}</span>
+        <span class="opt-text">${opt}</span>
+      </button>`;
+    });
+    document.getElementById('qOptions').innerHTML = optsHtml;
+
+    document.getElementById('qExpl').classList.remove('show');
+    const btn = document.getElementById('qAction');
+    btn.textContent = 'Bestätigen';
+    btn.disabled = true;
+    this.selected = null;
+    this.confirmed = false;
+  },
+
+  select(i) {
+    if(this.confirmed) return;
+    this.selected = i;
+    document.querySelectorAll('.opt-btn').forEach((b,idx) => {
+      b.classList.toggle('selected', idx === i);
+    });
+    document.getElementById('qAction').disabled = false;
+  },
+
+  action() {
+    if(!this.confirmed) {
+      this.confirm();
+    } else {
+      this.next();
+    }
+  },
+
+  confirm() {
+    if(this.selected === null) return;
+    this.confirmed = true;
+    const q = this.questions[this.index];
+    const correct = this.selected === q.correct_index;
+    if(correct) this.score++;
+
+    this.records.push({ question:q, selectedIndex:this.selected, correct });
+
+    document.querySelectorAll('.opt-btn').forEach((b,idx) => {
+      b.classList.add('locked');
+      b.classList.remove('selected');
+      if(idx === q.correct_index) b.classList.add('correct');
+      else if(idx === this.selected && !correct) b.classList.add('wrong');
+    });
+
+    if(!correct) {
+      document.getElementById('qExplText').textContent = q.explanation;
+      document.getElementById('qExpl').classList.add('show');
+    }
+
+    const btn = document.getElementById('qAction');
+    btn.textContent = this.index + 1 < this.questions.length ? 'Nächste Frage' : 'Ergebnis anzeigen';
+  },
+
+  next() {
+    if(this.index + 1 < this.questions.length) {
+      this.index++;
+      this.render();
+      document.querySelector('.quiz-body').scrollTo(0, 0);
+    } else {
+      this.finish();
+    }
+  },
+
+  finish() {
+    const total = this.questions.length;
+    const pct = Math.round((this.score / total) * 100);
+    const wrong = this.records.filter(r => !r.correct);
+
+    // Update stats
+    this.saveStats(pct);
+
+    // Ring animation
+    const circumference = 2 * Math.PI * 80; // 502.65
+    const offset = circumference - (circumference * pct / 100);
+    const ring = document.getElementById('resRing');
+    ring.style.stroke = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)';
+    setTimeout(() => ring.style.strokeDashoffset = offset, 100);
+
+    document.getElementById('resPct').textContent = pct + '%';
+    document.getElementById('resRatio').textContent = `${this.score} / ${total}`;
+
+    let msg = 'Mehr Übung nötig.';
+    if(pct >= 80) msg = 'Sehr gut! 🎉';
+    else if(pct >= 50) msg = 'Gut, aber übe weiter!';
+    document.getElementById('resMsg').textContent = msg;
+
+    // Wrong list
+    let wHtml = '';
+    if(wrong.length) {
+      wHtml = `<div class="wrong-header">Fehler (${wrong.length})</div>`;
+      wrong.forEach(r => {
+        const q = r.question;
+        wHtml += `<div class="wrong-card">
+          <div class="wc-q">${q.text}</div>
+          <div class="wc-row bad">✕ <s>${q.options[r.selectedIndex]}</s></div>
+          <div class="wc-row good">✓ ${q.options[q.correct_index]}</div>
+          <div class="wc-expl">${q.explanation}</div>
+        </div>`;
+      });
+    }
+    document.getElementById('wrongList').innerHTML = wHtml;
+
+    // Actions
+    let aHtml = '';
+    if(wrong.length) {
+      aHtml += `<button class="action-btn orange" onclick="app.retryWrong()">↻ Fehler wiederholen (${wrong.length})</button>`;
+    }
+    aHtml += `<button class="action-btn secondary" onclick="app.reset()">⌂ Zum Start</button>`;
+    document.getElementById('resActions').innerHTML = aHtml;
+
+    // Reset ring for next time
+    ring.style.strokeDashoffset = circumference;
+
+    this.show('result');
+    setTimeout(() => ring.style.strokeDashoffset = offset, 50);
+  },
+
+  reset() {
+    this.show('start');
+    this.loadStats();
+    document.getElementById('resRing').style.strokeDashoffset = 502.65;
+  },
+
+  show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  },
+
+  shuffle(arr) {
+    const a = [...arr];
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  },
+
+  // ── Persistence ──
+  loadStats() {
+    try {
+      const d = JSON.parse(localStorage.getItem('b1q_stats') || '{}');
+      document.getElementById('statPlayed').textContent = d.played || 0;
+      document.getElementById('statBest').textContent = d.best != null ? d.best + '%' : '–';
+      document.getElementById('statStreak').textContent = d.streak || 0;
+    } catch(e){}
+  },
+  saveStats(pct) {
+    try {
+      const d = JSON.parse(localStorage.getItem('b1q_stats') || '{}');
+      d.played = (d.played || 0) + 1;
+      d.best = d.best != null ? Math.max(d.best, pct) : pct;
+      d.streak = pct >= 60 ? (d.streak || 0) + 1 : 0;
+      localStorage.setItem('b1q_stats', JSON.stringify(d));
+    } catch(e){}
+  }
+};
+
+app.init();
+</script>
+</body>
+</html>
